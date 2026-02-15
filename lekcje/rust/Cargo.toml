@@ -1,0 +1,31 @@
+[package]
+name = "rtos-hazards"
+version = "0.1.0"
+edition = "2021"
+
+[[bin]]
+name = "deadlock_01"
+path = "src/deadlock_01.rs"
+
+[[bin]]
+name = "deadlock_02"
+path = "src/deadlock_02.rs"
+
+[[bin]]
+name = "race_condition_01"
+path = "src/race_condition_01.rs"
+
+[[bin]]
+name = "priority_inversion_01"
+path = "src/priority_inversion_01.rs"
+
+[[bin]]
+name = "starvation_01"
+path = "src/starvation_01.rs"
+
+[[bin]]
+name = "lock_free_01"
+path = "src/lock_free_01.rs"
+
+[dependencies]
+std = { version = "1.0", features = ["sync"] }
