@@ -1,12 +1,12 @@
 # Wspólne cechy systemów RTOS w różnych branżach
 
----
+______________________________________________________________________
 
 ## 1. Wprowadzenie
 
 Systemy czasu rzeczywistego występują w wielu branżach, ale mimo różnic w zastosowaniach mają wspólne fundamenty. Niezależnie czy to sterowanie lotem, hamulce w samochodzie, czy robot przemysłowy - zasady projektowania są podobne.
 
----
+______________________________________________________________________
 
 ## 2. Wspólne wymagania
 
@@ -26,6 +26,7 @@ Każdy system RTOS musi gwarantować czas reakcji. To wspólne dla wszystkich br
 Każdy system musi izolować błędy. Awaria jednego modułu nie może zniszczyć całego systemu.
 
 Sposoby izolacji:
+
 - Partycjonowanie pamięci (MPU)
 - Partycjonowanie czasowe
 - Hyperwizory
@@ -34,11 +35,12 @@ Sposoby izolacji:
 ### 2.3. Mechanizmy bezpieczeństwa
 
 Wspólne mechanizmy watchdog i safe mode:
+
 - Watchdog monitoruje żywotność tasków
 - Safe mode przy awarii - ograniczona funkcjonalność, ale bezpieczeństwo
 - Graceful degradation - kontrolowana degradacja przy przeciążeniu
 
----
+______________________________________________________________________
 
 ## 3. Wspólne problemy
 
@@ -47,11 +49,13 @@ Wspólne mechanizmy watchdog i safe mode:
 Każdy system RTOS zmaga się z tymi samymi problemami:
 
 **Współdzielone zasoby**
+
 - Dostęp do sprzętu (SPI, CAN, UART)
 - Wspólne struktury danych
 - Komunikacja między zadaniami
 
 **Rozwiązania**
+
 - Mutexy (z protokołami dziedziczenia priorytetów)
 - Kolejki komunikatów
 - Semafore
@@ -69,10 +73,11 @@ Zadanie M (średni priorytet) wykonuje się
 ```
 
 Rozwiązania:
+
 - Priority Inheritance
 - Priority Ceiling Protocol
 
----
+______________________________________________________________________
 
 ## 4. Wspólne wzorce architektoniczne
 
@@ -106,10 +111,11 @@ Wspólny wzorzec to podział:
 - **Soft RT** (SoC, Linux) - percepcja, planowanie, UI
 
 Przykład: robot Boston Dynamics
+
 - MCU = sterowanie silników, balans
 - SoC = SLAM, planowanie, wizja
 
----
+______________________________________________________________________
 
 ## 5. Wspólne narzędzia i techniki
 
@@ -138,7 +144,7 @@ Podobne podejście:
 - Testy obciążeniowe
 - Symulacja awarii
 
----
+______________________________________________________________________
 
 ## 6. Wspólne standardy i wzorce
 
@@ -162,25 +168,29 @@ Wspólne wzorce w każdej branży:
 - **Message Queue** - asynchroniczna wymiana danych
 - **Shared Memory** - dla wysokiej przepustowości (z synchronizacją)
 
----
+______________________________________________________________________
 
 ## 7. Wspólne zasady projektowania
 
 ### 7.1. Złote zasady
 
 1. **Najlepszy mutex to ten, którego nie potrzebujesz**
+
    - Unikaj współdzielonego stanu
    - Message zamiast shared memory
 
-2. **Izolacja jest kluczowa**
+1. **Izolacja jest kluczowa**
+
    - Oddziel krytyczne od niekrytycznych
    - Miej jasne interfejsy
 
-3. **Mierz WCET wcześnie**
+1. **Mierz WCET wcześnie**
+
    - Nie zgaduj, mierz
    - Zapas w budgetcie (50-70%)
 
-4. **Planuj awarie**
+1. **Planuj awarie**
+
    - Watchdog to podstawa
    - Safe mode musi działać
 
@@ -193,7 +203,7 @@ Wspólne błędy w każdej branży:
 - Printf w pętli sterowania
 - Jeden task robiący wszystko
 
----
+______________________________________________________________________
 
 ## 8. Różnice w implementacji
 
@@ -215,23 +225,23 @@ Wspólne błędy w każdej branży:
 | Certyfikacja | Łatwiejsza | Trudniejsza |
 | Elastyczność | Mniejsza | Większa |
 
----
+______________________________________________________________________
 
 ## 9. Podsumowanie
 
 ### Co łączy wszystkie systemy RTOS:
 
 1. **Wymagania czasowe** - deadline musi być dotrzymany
-2. **Izolacja błędów** - awaria jednego modułu nie psuje innych
-3. **Problemy synchronizacji** - mutex, deadlock, priority inversion
-4. **Narzędzia** - WCET, Tracealyzer, profilery
-5. **Zasady** - izolacja, message passing, planowanie awarii
+1. **Izolacja błędów** - awaria jednego modułu nie psuje innych
+1. **Problemy synchronizacji** - mutex, deadlock, priority inversion
+1. **Narzędzia** - WCET, Tracealyzer, profilery
+1. **Zasady** - izolacja, message passing, planowanie awarii
 
 ### Co różni branże:
 
 1. **Rygorystyczność** - lotnictwo vs przemysł
-2. **Standardy** - DO-178C vs ISO 26262
-3. **Narzędzia** - specyficzne dla branży
-4. **Procesy** - poziom dokumentacji i weryfikacji
+1. **Standardy** - DO-178C vs ISO 26262
+1. **Narzędzia** - specyficzne dla branży
+1. **Procesy** - poziom dokumentacji i weryfikacji
 
 Mimo różnic, fundament jest wspólny: **przewidywalność w najgorszym przypadku**. To łączy wszystkie systemy czasu rzeczywistego.

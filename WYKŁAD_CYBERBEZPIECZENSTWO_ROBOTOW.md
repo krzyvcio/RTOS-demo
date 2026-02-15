@@ -1,6 +1,6 @@
 # Wykład: Cyberbezpieczeństwo robotów — gdy roboty się buntują
 
----
+______________________________________________________________________
 
 ## Wprowadzenie: Roboty to komputery na sterydach
 
@@ -13,7 +13,7 @@ Każdy robot to komputer z dostępem do fizycznego świata. Co się stanie gdy k
 
 Cyberbezpieczeństwo w robotyce to nie jest "fajnie mieć". To **kwestia życia i śmierci**.
 
----
+______________________________________________________________________
 
 ## 1. Anatomia ataku na robota
 
@@ -43,7 +43,7 @@ Cyberbezpieczeństwo w robotyce to nie jest "fajnie mieć". To **kwestia życia 
 | Łącze radiowe | Zigbee/Bluetooth jam | Średnia |
 | Fizyczny | Podpięcie się do debug | Niska (ale możliwa) |
 
----
+______________________________________________________________________
 
 ## 2. Specyficzne zagrożenia w robotyce
 
@@ -68,6 +68,7 @@ def attack():
 ```
 
 **Obrona:**
+
 ```python
 # Autentykacja i autoryzacja
 from ros2_security import SecurityMiddleware
@@ -108,6 +109,7 @@ plc.write_holding_register(SAFETY_LIMIT_ADDR, 9999)  # Wyłączenie limitu
 ```
 
 **Obrona:**
+
 ```python
 # Whitelist operacji
 class SecurePLC:
@@ -243,6 +245,7 @@ bus.send(attack_msg)
 ```
 
 **Obrona:**
+
 ```python
 # Bezpieczny CAN z autentykacją
 
@@ -268,7 +271,7 @@ class SecureCAN:
         return data[:-4]  # Usuń HMAC
 ```
 
----
+______________________________________________________________________
 
 ## 3. Architektura bezpieczeństwa robota
 
@@ -341,7 +344,7 @@ class RobotSecurityManager:
             return cmd.execute()
 ```
 
----
+______________________________________________________________________
 
 ## 4. Bezpieczna aktualizacja OTA
 
@@ -350,8 +353,8 @@ class RobotSecurityManager:
 Aktualizacja OTA to jedno z największych zagrożeń:
 
 1. Atakujący przechwytuje aktualizację
-2. Wstrzykuje złośliwy kod
-3. Robot instaluje backdoor
+1. Wstrzykuje złośliwy kod
+1. Robot instaluje backdoor
 
 ### Rozwiązanie: Secure Boot + Signed Updates
 
@@ -388,7 +391,7 @@ class SecureOTAUpdater:
             self.rollback()
 ```
 
----
+______________________________________________________________________
 
 ## 5. Bezpieczeństwo warstwowe (Defense in Depth)
 
@@ -447,7 +450,7 @@ class HardwareSecurity:
         self.fuse.enable_secure_debug(self.tpm.public_key)
 ```
 
----
+______________________________________________________________________
 
 ## 6. Wykrywanie ataków
 
@@ -478,7 +481,7 @@ class IntrusionDetection:
         return Baseline()
 ```
 
----
+______________________________________________________________________
 
 ## 7. Scenariusze awarii
 
@@ -514,7 +517,7 @@ Obrona:
 - Monitoring anomaly
 ```
 
----
+______________________________________________________________________
 
 ## 8. Checklista bezpieczeństwa
 
@@ -540,17 +543,17 @@ Obrona:
 - [ ] Incident response plan
 - [ ] Backup i disaster recovery
 
----
+______________________________________________________________________
 
 ## 9. Podsumowanie
 
 ### Zasady bezpieczeństwa robotów
 
 1. **Defense in depth** — wiele warstw ochrony
-2. **Zero trust** — nic nie ufaj, wszystko weryfikuj
-3. **Secure by design** — bezpieczeństwo od początku
-4. **Fail secure** — przy błędzie bezpieczny stan
-5. **Monitor everything** — wiesz co się dzieje
+1. **Zero trust** — nic nie ufaj, wszystko weryfikuj
+1. **Secure by design** — bezpieczeństwo od początku
+1. **Fail secure** — przy błędzie bezpieczny stan
+1. **Monitor everything** — wiesz co się dzieje
 
 ### Pamiętać
 
@@ -559,15 +562,15 @@ Obrona:
 - Ataki są realne i już się dzieją
 - Lepiej zapobiegać niż leczyć
 
----
+______________________________________________________________________
 
 ## Pytania do dyskusji
 
 1. Czy robot medyczny powinien mieć fizyczny "kill switch" dostępny dla pacjenta?
-2. Jak balansować między bezpieczeństwem a użytecznością?
-3. Kto ponosi odpowiedzialność za atak na robota — producent czy operator?
+1. Jak balansować między bezpieczeństwem a użytecznością?
+1. Kto ponosi odpowiedzialność za atak na robota — producent czy operator?
 
----
+______________________________________________________________________
 
 ## Źródła
 

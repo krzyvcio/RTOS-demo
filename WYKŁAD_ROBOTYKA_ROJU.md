@@ -1,6 +1,6 @@
 # Wykład: Robotyka roju — miliony umysłów, jedna misja
 
----
+______________________________________________________________________
 
 ## Wprowadzenie: Kiedy mrówki pokonują słonia
 
@@ -15,7 +15,7 @@ W tym wykładzie dowiesz się jak:
 - Zaprogramować zachowania emergentne - które "same" wynikają z prostych reguł
 - I jak to połączyć z RTOS o którym właśnie się uczyliśmy
 
----
+______________________________________________________________________
 
 ## 1. Rewolucja roju: Od mrówek do robotów
 
@@ -43,7 +43,7 @@ MILIONY ROBOTÓW:
 | **Termity** | Budowanie bez architekta | Samoorganizacja |
 | **Neurony** | Sieć decyzyjna | Rozproszone przetwarzanie |
 
----
+______________________________________________________________________
 
 ## 2. Architektura roju - poziomy organizacji
 
@@ -150,7 +150,7 @@ class V2VCommunication:
            (emergentny!)
 ```
 
----
+______________________________________________________________________
 
 ## 3. RTOS w robotyce roju - krytyczny element
 
@@ -264,7 +264,7 @@ class TimeSynchronization:
         self.local_time = t4 + self.offset
 ```
 
----
+______________________________________________________________________
 
 ## 4. Niesamowite zastosowania - wizja przyszłości
 
@@ -456,7 +456,7 @@ ZASTOSOWANIA:
 - Tarcze radiacyjne
 ```
 
----
+______________________________________________________________________
 
 ## 5. Algorytmy roju - mózg zbiorowy
 
@@ -552,7 +552,7 @@ class AntColony:
         return path
 ```
 
----
+______________________________________________________________________
 
 ## 6. Wyzwania i rozwiązania
 
@@ -629,7 +629,7 @@ class ResilientAgent:
                 })
 ```
 
----
+______________________________________________________________________
 
 ## 7. Przyszłość: Hybrydy człowiek-roj
 
@@ -663,17 +663,17 @@ class HumanSwarmInterface:
             command[intent]()
 ```
 
----
+______________________________________________________________________
 
 ## 8. Podsumowanie
 
 ### Kluczowe zasady robotyki roju
 
 1. **Lokalne decyzje, globalny efekt** - proste reguły → złożone zachowania
-2. **Brak centralnego mózgu** - każdy robot myśli lokalnie
-3. **Stigmergia** - komunikacja przez środowisko
-4. **Emergentność** - więcej niż suma części
-5. **Odporność** - awaria pojedynczego = nic się nie dzieje
+1. **Brak centralnego mózgu** - każdy robot myśli lokalnie
+1. **Stigmergia** - komunikacja przez środowisko
+1. **Emergentność** - więcej niż suma części
+1. **Odporność** - awaria pojedynczego = nic się nie dzieje
 
 ### RTOS w roju
 
@@ -690,15 +690,15 @@ Rój to nie przyszłość - to teraźniejszość. Ale prawdziwa rewolucja dopier
 - Zbudujemy miliardy robotów
 - Pojedyncze jednostki będą nano-skala
 
----
+______________________________________________________________________
 
 ## Pytania do dyskusji
 
 1. Czy rój może być "świadomy"? Gdzie przebiega granica między emergentnością a inteligencją?
-2. Kto odpowiada za błędy roju - twórca algorytmu czy operator?
-3. Czy powinniśmy tworzyć miliardy tanich robotów jednorazowych?
+1. Kto odpowiada za błędy roju - twórca algorytmu czy operator?
+1. Czy powinniśmy tworzyć miliardy tanich robotów jednorazowych?
 
----
+______________________________________________________________________
 
 ## Źródła
 

@@ -1,6 +1,6 @@
 # Wykład: AI w robotyce — od klastrów do krawędzi
 
----
+______________________________________________________________________
 
 ## Wprowadzenie: AI to nie wygoda, to necessity
 
@@ -12,7 +12,7 @@ W centrum danych masz GPU za tysiące dolarów i nieograniczony prąd. Na roboci
 
 Ten wykład to o tym, jak zmusić AI do pracy w ograniczeniach robotyki.
 
----
+______________________________________________________________________
 
 ## 1. Dlaczego AI w robotyce jest trudna?
 
@@ -38,6 +38,7 @@ Chmura = sieć = opóźnienie. W robotyce decyzja musi zapadać **teraz**.
 ### Problem: środowisko
 
 Robot pracuje w:
+
 - Wibracjach
 - Zmiennych temperaturach
 - Ograniczonej pamięci
@@ -45,7 +46,7 @@ Robot pracuje w:
 
 Serwer w klimatyzowanej serwerowni ma lepiej.
 
----
+______________________________________________________________________
 
 ## 2. Architektura AI w robotyce — trzy warstwy
 
@@ -106,7 +107,7 @@ async def heavy_analysis(point_cloud):
 
 **Cel: mapowanie globalne, trenowanie, optymalizacja**
 
----
+______________________________________________________________________
 
 ## 3. TinyML — AI na mikrokontrolerach
 
@@ -159,7 +160,7 @@ student = SmallModel()   # 1M params
 student.train(teacher.outputs)
 ```
 
----
+______________________________________________________________________
 
 ## 4. Case study: Robot magazynowy Amazon
 
@@ -199,23 +200,25 @@ student.train(teacher.outputs)
 
 | Funkcja | Częstotliwość | Latencja |
 |---------|--------------|----------|
-| Sterowanie | 1 kHz | <1ms |
-| Detekcja | 30 Hz | <33ms |
-| SLAM | 10 Hz | <100ms |
-| Planowanie | 1 Hz | <1s |
+| Sterowanie | 1 kHz | \<1ms |
+| Detekcja | 30 Hz | \<33ms |
+| SLAM | 10 Hz | \<100ms |
+| Planowanie | 1 Hz | \<1s |
 
----
+______________________________________________________________________
 
 ## 5. Scenariusze awarii
 
 ### Awaria 1: Adversarial attack na detekcję
 
 **Co się dzieje:**
+
 - Atakujący nakleja specjalne wzory na przeszkody
 - Sieć neuronowa przestaje je widzieć
 - Robot wjeżdża w przeszkodę
 
 **Obrona:**
+
 ```python
 # Adversarial training - trenowanie na przykładach ataku
 adversarial_images = generate_adversarial(original_images)
@@ -229,11 +232,13 @@ predictions = model1(img) + model2(img) + model3(img)
 ### Awaria 2: Model drift
 
 **Co się dzieje:**
+
 - Środowisko się zmienia (nowe oświetlenie, kurz)
 - Model nauczony na danych z fabryki nie działa
 - Dokładność spada z 95% do 60%
 
 **Obrona:**
+
 ```python
 # Continuous learning na pokładzie
 class AdaptiveModel:
@@ -249,11 +254,13 @@ class AdaptiveModel:
 ### Awaria 3: Overfitting na edge
 
 **Co się dzieje:**
+
 - Model za duży dla available RAM
 - Wymiana danych na stacku = crash
 - Robot się zawiesza
 
 **Obrona:**
+
 ```python
 # Static memory allocation - wymagane w RTOS
 
@@ -268,7 +275,7 @@ class Model:
         return self.model(self.buffer)
 ```
 
----
+______________________________________________________________________
 
 ## 6. Dobre praktyki projektowe
 
@@ -343,7 +350,7 @@ def validate_ai_output(output):
     return output
 ```
 
----
+______________________________________________________________________
 
 ## 7. Narzędzia
 
@@ -366,17 +373,17 @@ def validate_ai_output(output):
 | Jetson Orin Nano | 40 | 7W | $500 |
 | Google Edge TPU | 4 | 2W | $40 |
 
----
+______________________________________________________________________
 
 ## 8. Podsumowanie
 
 ### Kluczowe zasady
 
 1. **AI na krawędzi to konieczność** — latency i niezawodność
-2. **Mniej znaczy więcej** — małe modele > duże
-3. **Kwantyzacja jest przyjacielem** — int8 wystarcza
-4. **Zawsze miej fallback** — AI zawodzi
-5. **Monitoruj co się dzieje** — watchdog i anomaly detection
+1. **Mniej znaczy więcej** — małe modele > duże
+1. **Kwantyzacja jest przyjacielem** — int8 wystarcza
+1. **Zawsze miej fallback** — AI zawodzi
+1. **Monitoruj co się dzieje** — watchdog i anomaly detection
 
 ### Co pamiętać
 
@@ -385,15 +392,15 @@ def validate_ai_output(output):
 - Bezpieczeństwo > wydajność
 - Testuj w realnych warunkach, nie tylko na laptopie
 
----
+______________________________________________________________________
 
 ## Pytania do dyskusji
 
 1. Jak zapewnić bezpieczeństwo AI na robocie, gdy aktualizacje OTA mogą być atakowane?
-2. Czy autonomiczny robot powinien zawsze słuchać AI, czy mieć override?
-3. Jak testować AI w warunkach których nie przewidzieliśmy?
+1. Czy autonomiczny robot powinien zawsze słuchać AI, czy mieć override?
+1. Jak testować AI w warunkach których nie przewidzieliśmy?
 
----
+______________________________________________________________________
 
 ## Źródła i dalsze czytanie
 

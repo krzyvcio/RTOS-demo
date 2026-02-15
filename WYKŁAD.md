@@ -1166,7 +1166,7 @@ Zróbmy z tego **moduł slajdów narracyjnych** pod tytułem:
 
 Poniżej masz **gotowy szkic slajd po slajdzie** (z notatkami dla prowadzącego), dokładnie pod hasło, które podałeś: *deterministyczny czas, minimalny jitter, certyfikowalność; złożoność, weryfikacja, koszty; bez RTOS — brak bezpiecznego sterowania, nawigacji, komunikacji*.
 
----
+______________________________________________________________________
 
 ## 🧭 Slajd 1 — Otwarcie (emocja + kontekst)
 
@@ -1175,15 +1175,15 @@ Poniżej masz **gotowy szkic slajd po slajdzie** (z notatkami dla prowadzącego)
 
 **Treść:**
 
-* Deterministyczny czas
-* Minimalny jitter
-* Certyfikowalność (DO-178C, ARINC 653)
-* Stawka: **życie ludzi**
+- Deterministyczny czas
+- Minimalny jitter
+- Certyfikowalność (DO-178C, ARINC 653)
+- Stawka: **życie ludzi**
 
 **Notatka dla prelegenta:**
 „W lotnictwie nie interesuje nas, że system *zwykle* działa szybko. Interesuje nas, że **zawsze** działa w czasie — nawet w najgorszym możliwym przypadku.”
 
----
+______________________________________________________________________
 
 ## ✈️ Slajd 2 — Co steruje samolotem?
 
@@ -1192,16 +1192,16 @@ Poniżej masz **gotowy szkic slajd po slajdzie** (z notatkami dla prowadzącego)
 
 **Treść (punkty):**
 
-* Flight Control Computer (FCC)
-* Autopilot
-* FADEC (silniki)
-* Nawigacja / INS / GPS
-* Komunikacja i systemy ostrzegawcze
+- Flight Control Computer (FCC)
+- Autopilot
+- FADEC (silniki)
+- Nawigacja / INS / GPS
+- Komunikacja i systemy ostrzegawcze
 
 **Notatka:**
 Każdy z tych systemów ma **twarde wymagania czasowe**. Spóźniony wynik = **zły wynik**.
 
----
+______________________________________________________________________
 
 ## ⏱️ Slajd 3 — Co znaczy „czas rzeczywisty” w lotnictwie?
 
@@ -1210,18 +1210,20 @@ Każdy z tych systemów ma **twarde wymagania czasowe**. Spóźniony wynik = **z
 
 **Treść:**
 
-* Real-Time = przewidywalny
-* Liczy się:
+- Real-Time = przewidywalny
 
-  * Worst-Case Execution Time (WCET)
-  * Worst-Case Response Time (WCRT)
-  * Jitter
-* Deadline miss = potencjalna katastrofa
+- Liczy się:
+
+  - Worst-Case Execution Time (WCET)
+  - Worst-Case Response Time (WCRT)
+  - Jitter
+
+- Deadline miss = potencjalna katastrofa
 
 **Notatka:**
 „Lepszy wolny, ale **zawsze przewidywalny** system, niż szybki, który czasem się spóźnia.”
 
----
+______________________________________________________________________
 
 ## 🧨 Slajd 4 — Scenariusz: „Niewinne opóźnienie”
 
@@ -1230,16 +1232,16 @@ Każdy z tych systemów ma **twarde wymagania czasowe**. Spóźniony wynik = **z
 
 **Treść (story):**
 
-* Turbulencja
-* Czujniki wykrywają odchylenie
-* Algorytm stabilizacji dostaje dane **za późno**
-* Reakcja przychodzi po czasie
-* Samolot wpada w oscylację
+- Turbulencja
+- Czujniki wykrywają odchylenie
+- Algorytm stabilizacji dostaje dane **za późno**
+- Reakcja przychodzi po czasie
+- Samolot wpada w oscylację
 
 **Notatka:**
 W lotnictwie **nie ma „trochę za późno”**. Jest tylko: *na czas* albo *za późno*.
 
----
+______________________________________________________________________
 
 ## 🧠 Slajd 5 — Dlaczego zwykły OS nie wystarcza?
 
@@ -1248,18 +1250,19 @@ W lotnictwie **nie ma „trochę za późno”**. Jest tylko: *na czas* albo *za
 
 **Treść:**
 
-* Klasyczny OS:
+- Klasyczny OS:
 
-  * optymalizuje średnią wydajność
-  * nie gwarantuje deadline’ów
-  * ma nieprzewidywalne latencje
-* Lotnictwo potrzebuje:
+  - optymalizuje średnią wydajność
+  - nie gwarantuje deadline’ów
+  - ma nieprzewidywalne latencje
 
-  * gwarancji czasowych
-  * izolacji
-  * analizy najgorszego przypadku
+- Lotnictwo potrzebuje:
 
----
+  - gwarancji czasowych
+  - izolacji
+  - analizy najgorszego przypadku
+
+______________________________________________________________________
 
 ## 🛠️ Slajd 6 — Co daje RTOS w awionice?
 
@@ -1268,13 +1271,13 @@ W lotnictwie **nie ma „trochę za późno”**. Jest tylko: *na czas* albo *za
 
 **Treść:**
 
-* Deterministyczny scheduler
-* Priorytety z preempcją
-* Kontrolowane czasy blokad
-* Przewidywalne przerwania
-* Mechanizmy health monitoring / watchdog
+- Deterministyczny scheduler
+- Priorytety z preempcją
+- Kontrolowane czasy blokad
+- Przewidywalne przerwania
+- Mechanizmy health monitoring / watchdog
 
----
+______________________________________________________________________
 
 ## 🧱 Slajd 7 — Architektura awioniki (ARINC 653 w pigułce)
 
@@ -1283,21 +1286,22 @@ W lotnictwie **nie ma „trochę za późno”**. Jest tylko: *na czas* albo *za
 
 **Treść:**
 
-* Partycje czasowe i pamięciowe:
+- Partycje czasowe i pamięciowe:
 
-  * Flight Control
-  * Navigation
-  * Communication
-  * Maintenance
-* Każda:
+  - Flight Control
+  - Navigation
+  - Communication
+  - Maintenance
 
-  * ma swój budżet czasu
-  * nie może zepsuć innych
+- Każda:
+
+  - ma swój budżet czasu
+  - nie może zepsuć innych
 
 **Notatka:**
 „Błąd w logowaniu **nie może** wpłynąć na sterowanie lotem.”
 
----
+______________________________________________________________________
 
 ## ⏳ Slajd 8 — Timeline: dobre vs złe projektowanie
 
@@ -1306,18 +1310,19 @@ W lotnictwie **nie ma „trochę za późno”**. Jest tylko: *na czas* albo *za
 
 **Treść (opisowo):**
 
-* Wersja zła:
+- Wersja zła:
 
-  * task sterowania czeka na mutex
-  * jitter
-  * brak gwarancji
-* Wersja dobra:
+  - task sterowania czeka na mutex
+  - jitter
+  - brak gwarancji
 
-  * sztywne okna czasowe
-  * brak blokad w krytycznej ścieżce
-  * stały czas reakcji
+- Wersja dobra:
 
----
+  - sztywne okna czasowe
+  - brak blokad w krytycznej ścieżce
+  - stały czas reakcji
+
+______________________________________________________________________
 
 ## 💥 Slajd 9 — Główne problemy w systemach RTOS w lotnictwie
 
@@ -1326,16 +1331,16 @@ W lotnictwie **nie ma „trochę za późno”**. Jest tylko: *na czas* albo *za
 
 **Treść:**
 
-* Złożoność architektury
-* Trudna weryfikacja
-* Wysokie koszty certyfikacji
-* Długie cykle rozwoju
-* Ograniczona elastyczność zmian
+- Złożoność architektury
+- Trudna weryfikacja
+- Wysokie koszty certyfikacji
+- Długie cykle rozwoju
+- Ograniczona elastyczność zmian
 
 **Notatka:**
 Tak, to jest drogie. Ale **alternatywa jest nieakceptowalna**.
 
----
+______________________________________________________________________
 
 ## 📜 Slajd 10 — Certyfikacja: DO-178C
 
@@ -1344,18 +1349,19 @@ Tak, to jest drogie. Ale **alternatywa jest nieakceptowalna**.
 
 **Treść:**
 
-* Poziomy A–E (A = katastrofalna awaria)
-* Wymagania:
+- Poziomy A–E (A = katastrofalna awaria)
 
-  * śledzenie wymagań → kod → testy
-  * analiza WCET
-  * testy strukturalne
-  * dowody deterministyczności
+- Wymagania:
+
+  - śledzenie wymagań → kod → testy
+  - analiza WCET
+  - testy strukturalne
+  - dowody deterministyczności
 
 **Notatka:**
 Tu nie wystarczy „działa u mnie”.
 
----
+______________________________________________________________________
 
 ## 🚨 Slajd 11 — Bez RTOS? Co się dzieje?
 
@@ -1364,17 +1370,17 @@ Tu nie wystarczy „działa u mnie”.
 
 **Treść:**
 
-* Bezpiecznego sterowania
-* Wiarygodnej nawigacji
-* Stabilnej komunikacji
-* Certyfikacji
-* Zaufania do systemu
+- Bezpiecznego sterowania
+- Wiarygodnej nawigacji
+- Stabilnej komunikacji
+- Certyfikacji
+- Zaufania do systemu
 
 **Puenta:**
 
 > Bez RTOS w awionice nie ma **bezpiecznego lotu**.
 
----
+______________________________________________________________________
 
 ## 🏁 Slajd 12 — Mocne zamknięcie
 
@@ -1385,7 +1391,7 @@ Musi działać dobrze **zawsze**.**
 **Podpis:**
 RTOS = inżynieria czasu, nie wygody programisty.
 
----
+______________________________________________________________________
 
 # 💣 Następny krok: scenariusze awarii (ETAP 2)
 
@@ -1396,11 +1402,11 @@ Proponuję jako **pierwszy deep-dive**:
 
 Albo alternatywy:
 
-* „Jitter burst przez burzę przerwań od czujników”
-* „Deadlock w systemie komunikacji pokładowej”
-* „Cichy overrun WCET po update algorytmu filtracji”
+- „Jitter burst przez burzę przerwań od czujników”
+- „Deadlock w systemie komunikacji pokładowej”
+- „Cichy overrun WCET po update algorytmu filtracji”
 
----
+______________________________________________________________________
 
 Powiedz mi:
 👉 Chcesz, żebym **rozpisał pierwszy scenariusz awarii (np. priority inversion w FCC) jako pełną historię slajd po slajdzie**?
@@ -1414,215 +1420,227 @@ Zróbmy więc **moduł wykładu: „RTOS w kosmosie: jak systemy zawodzą i jak 
 
 Poniżej masz **pakiet scenariuszy awarii kosmicznych** + jak je opowiedzieć na slajdach (narracyjnie).
 
----
+______________________________________________________________________
 
 # 🌌 1. Kontekst: Dlaczego kosmos jest bezlitosny dla RTOS?
 
 **Slajd: „Środowisko, które chce cię zabić”**
 
-* Promieniowanie (SEU, SEL, bit flips)
-* Brak fizycznego dostępu
-* Opóźnienia komunikacji (minuty, godziny)
-* Ograniczona energia i CPU
-* System musi działać **latami**
+- Promieniowanie (SEU, SEL, bit flips)
+- Brak fizycznego dostępu
+- Opóźnienia komunikacji (minuty, godziny)
+- Ograniczona energia i CPU
+- System musi działać **latami**
 
 Puenta:
 
 > W kosmosie nie ma „zrestartuj i zobaczymy”.
 
----
+______________________________________________________________________
 
 # 💥 Scenariusz 1: Bit flip w pamięci → „cicha korupcja stanu”
 
 **Co się dzieje:**
 
-* Promieniowanie zmienia 1 bit w RAM
-* Zmienna stanu filtru / kontrolera ma złą wartość
-* System dalej działa… ale **na złych danych**
-* Po kilku minutach orientacja satelity „odpływa”
+- Promieniowanie zmienia 1 bit w RAM
+- Zmienna stanu filtru / kontrolera ma złą wartość
+- System dalej działa… ale **na złych danych**
+- Po kilku minutach orientacja satelity „odpływa”
 
 **Dlaczego to zabija misję:**
 
-* Brak crasha = brak alarmu
-* Błędy narastają powoli
-* Antena traci Ziemię, panele tracą Słońce
+- Brak crasha = brak alarmu
+- Błędy narastają powoli
+- Antena traci Ziemię, panele tracą Słońce
 
 **Jak projektować:**
 
-* ECC / TMR (Triple Modular Redundancy)
-* CRC na strukturach stanu
-* Periodic state scrubbing
-* Plausibility checks w taskach RT
+- ECC / TMR (Triple Modular Redundancy)
+- CRC na strukturach stanu
+- Periodic state scrubbing
+- Plausibility checks w taskach RT
 
----
+______________________________________________________________________
 
 # 💥 Scenariusz 2: Single Event Latch-up (SEL) → CPU „zamiera”
 
 **Co się dzieje:**
 
-* Promieniowanie powoduje latch-up w układzie
-* Pobór prądu rośnie
-* CPU przestaje odpowiadać albo się zawiesza
+- Promieniowanie powoduje latch-up w układzie
+- Pobór prądu rośnie
+- CPU przestaje odpowiadać albo się zawiesza
 
 **Objaw w systemie:**
 
-* Taski nie zgłaszają watchdogów
-* Brak odpowiedzi na telemetrię
-* System „żyje elektrycznie”, ale logicznie nie
+- Taski nie zgłaszają watchdogów
+- Brak odpowiedzi na telemetrię
+- System „żyje elektrycznie”, ale logicznie nie
 
 **Jak projektować:**
 
-* Zewnętrzny watchdog sprzętowy
-* Power cycling sekcji
-* Cold/warm redundancy CPU
-* Boot w tryb safe mode
+- Zewnętrzny watchdog sprzętowy
+- Power cycling sekcji
+- Cold/warm redundancy CPU
+- Boot w tryb safe mode
 
----
+______________________________________________________________________
 
 # 💥 Scenariusz 3: Cumulative jitter → „dryf czasu”
 
 **Co się dzieje:**
 
-* Każda pętla RT mieści się w deadline
-* Ale:
+- Każda pętla RT mieści się w deadline
 
-  * zegar się rozjeżdża
-  * synchronizacja tasków powoli dryfuje
-* Po godzinach/dniach:
+- Ale:
 
-  * złe fazowanie algorytmów
-  * błędne okna komunikacyjne
-  * kolizje czasowe
+  - zegar się rozjeżdża
+  - synchronizacja tasków powoli dryfuje
+
+- Po godzinach/dniach:
+
+  - złe fazowanie algorytmów
+  - błędne okna komunikacyjne
+  - kolizje czasowe
 
 **Dlaczego podstępne:**
 
-* Testy krótkoterminowe OK
-* Problem wychodzi **po tygodniach**
+- Testy krótkoterminowe OK
+- Problem wychodzi **po tygodniach**
 
 **Jak projektować:**
 
-* Global time base
-* Periodic resynchronization
-* Time-triggered scheduling
-* Monitoring jitter budgetów
+- Global time base
+- Periodic resynchronization
+- Time-triggered scheduling
+- Monitoring jitter budgetów
 
----
+______________________________________________________________________
 
 # 💥 Scenariusz 4: Memory leak w systemie, którego nie da się zrestartować
 
 **Co się dzieje:**
 
-* Mały wyciek w tasku komunikacji
-* 1 KB na godzinę
-* Po 3 miesiącach:
+- Mały wyciek w tasku komunikacji
 
-  * brak pamięci
-  * alokacje RT zawodzą
-  * system wchodzi w nieprzewidywalne stany
+- 1 KB na godzinę
+
+- Po 3 miesiącach:
+
+  - brak pamięci
+  - alokacje RT zawodzą
+  - system wchodzi w nieprzewidywalne stany
 
 **Dlaczego to kosmiczna katastrofa:**
 
-* Brak rebootu
-* Brak debuggera
-* Misja trwa lata
+- Brak rebootu
+- Brak debuggera
+- Misja trwa lata
 
 **Jak projektować:**
 
-* Zero dynamicznej alokacji w runtime
-* Memory pools o stałym rozmiarze
-* Monitoring high-water mark
-* Tryby degradacji
+- Zero dynamicznej alokacji w runtime
+- Memory pools o stałym rozmiarze
+- Monitoring high-water mark
+- Tryby degradacji
 
----
+______________________________________________________________________
 
 # 💥 Scenariusz 5: Stack overflow → „duch w maszynie”
 
 **Co się dzieje:**
 
-* Rzadki przypadek danych
-* Głębsza rekursja / większa ramka stosu
-* Nadpisany sąsiedni task lub RTOS kernel
-* Objawy:
+- Rzadki przypadek danych
 
-  * losowe resety
-  * dziwne decyzje systemu
-  * „niewytłumaczalne” zachowania
+- Głębsza rekursja / większa ramka stosu
+
+- Nadpisany sąsiedni task lub RTOS kernel
+
+- Objawy:
+
+  - losowe resety
+  - dziwne decyzje systemu
+  - „niewytłumaczalne” zachowania
 
 **Jak projektować:**
 
-* Canary na stosie
-* Statyczna analiza zużycia stacka
-* Duże marginesy
-* Watchdog per task
+- Canary na stosie
+- Statyczna analiza zużycia stacka
+- Duże marginesy
+- Watchdog per task
 
----
+______________________________________________________________________
 
 # 💥 Scenariusz 6: Deadlock w trybie safe mode
 
 **Co się dzieje:**
 
-* System wchodzi w tryb awaryjny
-* Rzadko używana ścieżka kodu
-* Dwa taski:
+- System wchodzi w tryb awaryjny
 
-  * każdy czeka na zasób drugiego
-* Safe mode… **nie jest bezpieczny**
+- Rzadko używana ścieżka kodu
+
+- Dwa taski:
+
+  - każdy czeka na zasób drugiego
+
+- Safe mode… **nie jest bezpieczny**
 
 **Dlaczego groźne:**
 
-* Tryb, który ma ratować misję, sam ją zabija
+- Tryb, który ma ratować misję, sam ją zabija
 
 **Jak projektować:**
 
-* Minimalny kod w safe mode
-* Brak złożonych zależności
-* Analiza blokad również dla trybów awaryjnych
+- Minimalny kod w safe mode
+- Brak złożonych zależności
+- Analiza blokad również dla trybów awaryjnych
 
----
+______________________________________________________________________
 
 # 💥 Scenariusz 7: SEU w strukturze scheduler’a
 
 **Co się dzieje:**
 
-* Bit flip w:
+- Bit flip w:
 
-  * liście ready tasków
-  * liczniku ticków
-* Scheduler zaczyna:
+  - liście ready tasków
+  - liczniku ticków
 
-  * pomijać task
-  * uruchamiać zły task
-  * gubić priorytety
+- Scheduler zaczyna:
+
+  - pomijać task
+  - uruchamiać zły task
+  - gubić priorytety
 
 **Objaw:**
 
-* System „działa”, ale **nie ten, co trzeba**
+- System „działa”, ale **nie ten, co trzeba**
 
 **Jak projektować:**
 
-* Redundantne struktury krytyczne
-* Sanity checks kernela
-* Periodic consistency checks
-* Restart kernela z zachowaniem stanu krytycznego
+- Redundantne struktury krytyczne
+- Sanity checks kernela
+- Periodic consistency checks
+- Restart kernela z zachowaniem stanu krytycznego
 
----
+______________________________________________________________________
 
 # 🧠 Slajd zbiorczy: Czego uczy kosmos?
 
 **Puenta:**
 
-* Najgorsze błędy to:
+- Najgorsze błędy to:
 
-  * te, które **nie crashują**
-  * te, które **wychodzą po miesiącach**
-* RTOS w kosmosie musi:
+  - te, które **nie crashują**
+  - te, które **wychodzą po miesiącach**
 
-  * wykrywać
-  * izolować
-  * odzyskiwać
-  * degradować się kontrolowanie
+- RTOS w kosmosie musi:
 
----
+  - wykrywać
+  - izolować
+  - odzyskiwać
+  - degradować się kontrolowanie
+
+______________________________________________________________________
 
 # 🚀 Proponowany pierwszy deep-dive
 
@@ -1633,12 +1651,12 @@ Najlepszy „killer case” na start wykładu:
 
 Mogę go rozpisać:
 
-* slajd po slajdzie
-* z diagramami tasków
-* z mechanizmami obrony
-* z checklistą projektową
+- slajd po slajdzie
+- z diagramami tasków
+- z mechanizmami obrony
+- z checklistą projektową
 
----
+______________________________________________________________________
 
 Powiedz:
 👉 Chcesz, żebym **rozwinął któryś z tych scenariuszy w pełną narrację wykładową (jak wcześniej w lotnictwie)**?
@@ -1649,162 +1667,172 @@ Masz rację — **słuszny ochrzan** 😅🙏. Za bardzo się rozpędziłem z je
 Zróbmy to porządnie:
 Dostajesz **4 pełne deep-dive scenariusze kosmiczne**, każdy w formie **mini-wykładu narracyjnego** (co się stało → jak to widać → dlaczego architektura pozwoliła → jak projektować, żeby przeżyć).
 
----
+______________________________________________________________________
 
 # 🌌 DEEP-DIVE #1: Bit flip w stanie sterowania („cicha korupcja”)
 
 ## 🎬 Akt I — Objaw
 
-* Satelita powoli traci orientację
-* Telemetria „w normie”
-* Brak resetów, brak alarmów
-* Po kilku godzinach: utrata łączności
+- Satelita powoli traci orientację
+- Telemetria „w normie”
+- Brak resetów, brak alarmów
+- Po kilku godzinach: utrata łączności
 
 ## 🔬 Akt II — Co się stało
 
-* Promieniowanie → SEU → 1 bit zmieniony w:
+- Promieniowanie → SEU → 1 bit zmieniony w:
 
-  * macierzy orientacji
-  * albo wektorze stanu filtru Kalmana
-* Algorytm działa **na złych danych**, ale stabilnie
+  - macierzy orientacji
+  - albo wektorze stanu filtru Kalmana
+
+- Algorytm działa **na złych danych**, ale stabilnie
 
 ## 🧨 Akt III — Dlaczego system tego nie złapał
 
-* Brak CRC / sanity checków na strukturach stanu
-* Brak redundancji obliczeń
-* Brak „plausibility checks” (np. czy orientacja jest fizycznie możliwa)
+- Brak CRC / sanity checków na strukturach stanu
+- Brak redundancji obliczeń
+- Brak „plausibility checks” (np. czy orientacja jest fizycznie możliwa)
 
 ## 🛠️ Akt IV — Jak projektować
 
-* CRC / checksum na krytycznych strukturach
-* TMR (potrójne liczenie + głosowanie)
-* Periodic state scrubbing
-* Task „StateMonitor” sprawdzający spójność
+- CRC / checksum na krytycznych strukturach
+- TMR (potrójne liczenie + głosowanie)
+- Periodic state scrubbing
+- Task „StateMonitor” sprawdzający spójność
 
----
+______________________________________________________________________
 
 # 🌌 DEEP-DIVE #2: Memory leak („zabójca na raty”)
 
 ## 🎬 Akt I — Objaw
 
-* Satelita działa idealnie przez 2 miesiące
-* Potem:
+- Satelita działa idealnie przez 2 miesiące
 
-  * sporadyczne błędy alokacji
-  * potem brak pamięci
-  * potem chaos w RTOS
+- Potem:
+
+  - sporadyczne błędy alokacji
+  - potem brak pamięci
+  - potem chaos w RTOS
 
 ## 🔬 Akt II — Co się stało
 
-* Task komunikacji:
+- Task komunikacji:
 
-  * alokuje bufor na każdą ramkę
-  * czasem nie zwalnia
-* 200 bajtów/godzinę → po tygodniach: katastrofa
+  - alokuje bufor na każdą ramkę
+  - czasem nie zwalnia
+
+- 200 bajtów/godzinę → po tygodniach: katastrofa
 
 ## 🧨 Akt III — Dlaczego to przeszło testy
 
-* Testy trwały godziny / dni, nie miesiące
-* W labie zawsze był „świeży start”
-* Nikt nie patrzył na high-water mark RAM
+- Testy trwały godziny / dni, nie miesiące
+- W labie zawsze był „świeży start”
+- Nikt nie patrzył na high-water mark RAM
 
 ## 🛠️ Akt IV — Jak projektować
 
-* Zero malloc/free w runtime
-* Memory pools o stałym rozmiarze
-* Monitoring zużycia pamięci
-* Tryby degradacji (np. wyłącz telemetrię, ratuj sterowanie)
+- Zero malloc/free w runtime
+- Memory pools o stałym rozmiarze
+- Monitoring zużycia pamięci
+- Tryby degradacji (np. wyłącz telemetrię, ratuj sterowanie)
 
----
+______________________________________________________________________
 
 # 🌌 DEEP-DIVE #3: Cumulative jitter („śmierć przez tysiąc mikrosekund”)
 
 ## 🎬 Akt I — Objaw
 
-* Każda pętla RT:
+- Każda pętla RT:
 
-  * mieści się w deadline
-* Ale po tygodniach:
+  - mieści się w deadline
 
-  * okna komunikacyjne się rozjeżdżają
-  * synchronizacja z Ziemią się gubi
-  * algorytmy zaczynają wchodzić sobie w drogę
+- Ale po tygodniach:
+
+  - okna komunikacyjne się rozjeżdżają
+  - synchronizacja z Ziemią się gubi
+  - algorytmy zaczynają wchodzić sobie w drogę
 
 ## 🔬 Akt II — Co się stało
 
-* Każdy task ma:
+- Każdy task ma:
 
-  * +5 µs jitter
-* Scheduler nie pilnuje **fazowania**
-* Błąd narasta w czasie → dryf systemowy
+  - +5 µs jitter
+
+- Scheduler nie pilnuje **fazowania**
+
+- Błąd narasta w czasie → dryf systemowy
 
 ## 🧨 Akt III — Dlaczego tego nie widać w testach
 
-* Testy krótkie: wszystko OK
-* Problem wychodzi po:
+- Testy krótkie: wszystko OK
 
-  * tysiącach
-  * milionach cykli
+- Problem wychodzi po:
+
+  - tysiącach
+  - milionach cykli
 
 ## 🛠️ Akt IV — Jak projektować
 
-* Global time base
-* Time-triggered scheduling
-* Periodic resynchronization
-* Budżety jitteru, nie tylko WCET
+- Global time base
+- Time-triggered scheduling
+- Periodic resynchronization
+- Budżety jitteru, nie tylko WCET
 
----
+______________________________________________________________________
 
 # 🌌 DEEP-DIVE #4: Stack overflow („duch w maszynie”)
 
 ## 🎬 Akt I — Objaw
 
-* Raz na kilka dni:
+- Raz na kilka dni:
 
-  * losowy reset
-  * albo dziwne decyzje algorytmu
-* Brak powtarzalnego scenariusza
+  - losowy reset
+  - albo dziwne decyzje algorytmu
+
+- Brak powtarzalnego scenariusza
 
 ## 🔬 Akt II — Co się stało
 
-* Rzadki przypadek danych → większa głębokość stosu
-* Task przekracza limit stacka
-* Nadpisuje:
+- Rzadki przypadek danych → większa głębokość stosu
 
-  * sąsiedni task
-  * albo struktury RTOS
+- Task przekracza limit stacka
+
+- Nadpisuje:
+
+  - sąsiedni task
+  - albo struktury RTOS
 
 ## 🧨 Akt III — Dlaczego to takie zdradliwe
 
-* 99.999% czasu działa idealnie
-* Błąd tylko w ekstremalnych danych
-* Objawy **nie wskazują** na stos
+- 99.999% czasu działa idealnie
+- Błąd tylko w ekstremalnych danych
+- Objawy **nie wskazują** na stos
 
 ## 🛠️ Akt IV — Jak projektować
 
-* Canary / guard pattern na stosie
-* Statyczna analiza zużycia stacka
-* Duże marginesy
-* Watchdog per task + stack watermark
+- Canary / guard pattern na stosie
+- Statyczna analiza zużycia stacka
+- Duże marginesy
+- Watchdog per task + stack watermark
 
----
+______________________________________________________________________
 
 # 🌌 BONUS: DEEP-DIVE #5: Uszkodzenie struktur schedulera (SEU w kernelu)
 
 ## Objaw:
 
-* Task znika z harmonogramu
-* Inny task dostaje CPU „za często”
-* System „działa”, ale **nie ten, co trzeba**
+- Task znika z harmonogramu
+- Inny task dostaje CPU „za często”
+- System „działa”, ale **nie ten, co trzeba**
 
 ## Obrona:
 
-* Redundantne struktury krytyczne
-* Sanity checks kernela
-* Periodic consistency scan
-* Kontrolowany restart kernela + restore stanu krytycznego
+- Redundantne struktury krytyczne
+- Sanity checks kernela
+- Periodic consistency scan
+- Kontrolowany restart kernela + restore stanu krytycznego
 
----
+______________________________________________________________________
 
 ## 🧠 Slajd zbiorczy — Lekcja z kosmosu
 
@@ -1815,6 +1843,7 @@ Dostajesz **4 pełne deep-dive scenariusze kosmiczne**, każdy w formie **mini-w
 > - te, które __wychodzą po miesiącach__
 
 RTOS w kosmosie musi:
+
 - wykrywać
 - izolować
 - korygować
@@ -1839,59 +1868,62 @@ Krótka odpowiedź brzmi: **RTOS nie zniknie**. Ale **zmieni się w coś większ
 
 Zróbmy to na spokojnie i konkretnie.
 
----
+______________________________________________________________________
 
 # 🧠 1. Dlaczego RTOS w ogóle istnieje?
 
 Bo są systemy, w których:
 
-* liczy się **najgorszy przypadek**, nie średnia
-* **deadline miss = awaria systemu**
-* trzeba mieć:
+- liczy się **najgorszy przypadek**, nie średnia
 
-  * deterministyczny scheduler
-  * kontrolę nad latencją
-  * przewidywalność pamięci
-  * certyfikowalność
+- **deadline miss = awaria systemu**
+
+- trzeba mieć:
+
+  - deterministyczny scheduler
+  - kontrolę nad latencją
+  - przewidywalność pamięci
+  - certyfikowalność
 
 To:
 
-* lotnictwo ✈️
-* kosmos 🚀
-* automotive 🚗
-* robotyka 🤖
-* medycyna 🏥
-* przemysł 🏭
+- lotnictwo ✈️
+- kosmos 🚀
+- automotive 🚗
+- robotyka 🤖
+- medycyna 🏥
+- przemysł 🏭
 
 Tych domen **nie da się** „przenieść na best-effort OS” bez utraty bezpieczeństwa.
 
 ➡️ **Wniosek:** RTOS jako idea **nie umrze**.
 
----
+______________________________________________________________________
 
 # 🔮 2. Co się więc zmieni? (Bo klasyczny RTOS też ma swoje limity)
 
 Klasyczne RTOS-y:
 
-* są:
+- są:
 
-  * niskopoziomowe
-  * ręczne w integracji
-  * trudne w weryfikacji
-* nie skaluje się dobrze na:
+  - niskopoziomowe
+  - ręczne w integracji
+  - trudne w weryfikacji
 
-  * wielordzeniowość
-  * heterogeniczne SoC (CPU + GPU + NPU)
-  * mixed-criticality
-  * cyberbezpieczeństwo
+- nie skaluje się dobrze na:
+
+  - wielordzeniowość
+  - heterogeniczne SoC (CPU + GPU + NPU)
+  - mixed-criticality
+  - cyberbezpieczeństwo
 
 Świat idzie w stronę:
 
-* **wielu poziomów krytyczności**
-* **wielu typów obliczeń**
-* **wielu domen w jednym SoC**
+- **wielu poziomów krytyczności**
+- **wielu typów obliczeń**
+- **wielu domen w jednym SoC**
 
----
+______________________________________________________________________
 
 # 🧱 3. Najbardziej prawdopodobny „następca”:
 
@@ -1905,61 +1937,61 @@ Będzie:
 
 > **Platforma**, która uruchamia:
 
-* partycję hard-RT (sterowanie)
-* partycję safety (monitoring)
-* partycję soft-RT (percepcja)
-* partycję Linux/AI (planowanie, UI)
+- partycję hard-RT (sterowanie)
+- partycję safety (monitoring)
+- partycję soft-RT (percepcja)
+- partycję Linux/AI (planowanie, UI)
 
 Na wspólnym sprzęcie, ale:
 
-* z **twardą izolacją czasową i pamięciową**
-* z **formalnie weryfikowanym kernelem**
+- z **twardą izolacją czasową i pamięciową**
+- z **formalnie weryfikowanym kernelem**
 
 Przykłady kierunku:
 
-* seL4 (formalnie zweryfikowany microkernel)
-* QNX Hypervisor
-* PikeOS
-* INTEGRITY
-* AUTOSAR Adaptive + Classic
-* ARINC 653 style partitioning
+- seL4 (formalnie zweryfikowany microkernel)
+- QNX Hypervisor
+- PikeOS
+- INTEGRITY
+- AUTOSAR Adaptive + Classic
+- ARINC 653 style partitioning
 
 ➡️ To nie jest „nowy RTOS”.
 ➡️ To jest **RTOS jako jedna z partycji w większym systemie**.
 
----
+______________________________________________________________________
 
 # 🕰️ 4. Time-Triggered Systems zamiast „klasycznego schedulera”
 
 Coraz więcej systemów safety idzie w stronę:
 
-* **Time-Triggered Architecture (TTA)**
-* **Static schedules**
-* Sztywne okna czasowe zamiast „kto ma wyższy priorytet”
+- **Time-Triggered Architecture (TTA)**
+- **Static schedules**
+- Sztywne okna czasowe zamiast „kto ma wyższy priorytet”
 
 Zamiast:
 
-* „task się obudzi, jak scheduler pozwoli”
+- „task się obudzi, jak scheduler pozwoli”
 
 Masz:
 
-* „task A zawsze w oknie 0–200 µs”
-* „task B zawsze w oknie 200–350 µs”
-* „komunikacja zawsze w slocie 10”
+- „task A zawsze w oknie 0–200 µs”
+- „task B zawsze w oknie 200–350 µs”
+- „komunikacja zawsze w slocie 10”
 
 Efekt:
 
-* zero jitteru strukturalnego
-* łatwiejsza certyfikacja
-* łatwiejsza analiza WCET/WCRT
+- zero jitteru strukturalnego
+- łatwiejsza certyfikacja
+- łatwiejsza analiza WCET/WCRT
 
 To już widać w:
 
-* avionice
-* automotive (TSN, TTA, time-aware scheduling)
-* systemach kosmicznych
+- avionice
+- automotive (TSN, TTA, time-aware scheduling)
+- systemach kosmicznych
 
----
+______________________________________________________________________
 
 # 🛡️ 5. Microkernel + formalna weryfikacja = przyszłość safety
 
@@ -1969,44 +2001,46 @@ Duży trend:
 
 Przykład:
 
-* seL4:
+- seL4:
 
-  * formalny dowód poprawności kernela
-  * brak klas całych bugów (race, use-after-free w kernelu itd.)
-* Krytyczne systemy:
+  - formalny dowód poprawności kernela
+  - brak klas całych bugów (race, use-after-free w kernelu itd.)
 
-  * sterowanie
-  * bezpieczeństwo
-  * monitorowanie
+- Krytyczne systemy:
+
+  - sterowanie
+  - bezpieczeństwo
+  - monitorowanie
     działają jako **oddzielne, izolowane komponenty**
 
 RTOS w tej wizji:
 
-* nie jest monolitem
-* jest **jedną z usług w architekturze mikrojądra**
+- nie jest monolitem
+- jest **jedną z usług w architekturze mikrojądra**
 
----
+______________________________________________________________________
 
 # 🧬 6. Języki i narzędzia też zmieniają grę
 
 C/C++ nie zniknie szybko, ale:
 
-* coraz więcej:
+- coraz więcej:
 
-  * Rust (safety memory)
-  * SPARK/Ada (formal methods)
-  * model-based design
-* coraz więcej:
+  - Rust (safety memory)
+  - SPARK/Ada (formal methods)
+  - model-based design
 
-  * generowania kodu z modeli czasowych
-  * automatycznej analizy schedulingu
-  * automatycznych dowodów własności czasowych
+- coraz więcej:
+
+  - generowania kodu z modeli czasowych
+  - automatycznej analizy schedulingu
+  - automatycznych dowodów własności czasowych
 
 Czyli:
 
 > Mniej „ręcznego dłubania w taskach”, więcej **projektowania systemu jako modelu czasu i zasobów**.
 
----
+______________________________________________________________________
 
 # 🤖 7. A co z AI, GPU, NPU?
 
@@ -2014,23 +2048,24 @@ Tu klasyczny RTOS **sam nie wystarczy**.
 
 Nadchodzi era:
 
-* heterogenicznych systemów:
+- heterogenicznych systemów:
 
-  * CPU (RT)
-  * GPU / NPU (percepcja, ML)
-* z orkiestracją:
+  - CPU (RT)
+  - GPU / NPU (percepcja, ML)
 
-  * kto
-  * gdzie
-  * kiedy
+- z orkiestracją:
+
+  - kto
+  - gdzie
+  - kiedy
     może liczyć
 
 Przyszłość to:
 
-* **RTOS jako część orkiestratora czasu i zasobów**
-* nie „system operacyjny”, tylko **platforma wykonawcza dla mixed-criticality**
+- **RTOS jako część orkiestratora czasu i zasobów**
+- nie „system operacyjny”, tylko **platforma wykonawcza dla mixed-criticality**
 
----
+______________________________________________________________________
 
 # 🏁 8. Odpowiedź w jednym zdaniu
 
@@ -2041,13 +2076,13 @@ Albo jeszcze prościej:
 > Następcą RTOS nie jest „nowy OS”.
 > Następcą RTOS jest **architektura systemu, w której RTOS jest tylko jednym z elementów**.
 
----
+______________________________________________________________________
 
 # 🎯 Jeśli chcesz, możemy pójść w bardzo konkretną stronę:
 
-* 🧱 „Jak wygląda system przyszłości: seL4 + RT partycja + Linux + AI?”
-* 🕰️ „Time-triggered vs priority-based — co wygra w safety?”
-* 🚗 „Jak automotive już teraz przechodzi z klasycznych RTOS na platformy mixed-criticality?”
-* 🚀 „Jak byś dziś zaprojektował system kosmiczny/lotniczy ‘next-gen’?”
+- 🧱 „Jak wygląda system przyszłości: seL4 + RT partycja + Linux + AI?”
+- 🕰️ „Time-triggered vs priority-based — co wygra w safety?”
+- 🚗 „Jak automotive już teraz przechodzi z klasycznych RTOS na platformy mixed-criticality?”
+- 🚀 „Jak byś dziś zaprojektował system kosmiczny/lotniczy ‘next-gen’?”
 
 Powiedz, który kierunek Cię najbardziej interesuje, a rozrysujemy go **jak prawdziwą architekturę systemu** 🧠📐
