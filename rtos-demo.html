@@ -1,0 +1,994 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RTOS Visualizer — Real-Time Scheduler Demo</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Orbitron:wght@400;700;900&family=Space+Mono:wght@400;700&display=swap');
+
+  :root {
+    --bg: #070a0f;
+    --surface: #0d1117;
+    --panel: #111820;
+    --border: #1e2d3d;
+    --grid: rgba(30,45,61,0.4);
+    --accent: #00d4ff;
+    --green: #00ff88;
+    --orange: #ff8800;
+    --red: #ff3366;
+    --yellow: #ffdd00;
+    --purple: #aa44ff;
+    --text: #c9d1d9;
+    --dim: #4a5568;
+    --glow-blue: 0 0 12px #00d4ff88;
+    --glow-green: 0 0 12px #00ff8888;
+    --glow-red: 0 0 12px #ff336688;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 13px;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* HEADER */
+  header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 28px;
+    border-bottom: 1px solid var(--border);
+    background: linear-gradient(90deg, #070a0f 60%, #0d1520 100%);
+    position: sticky; top: 0; z-index: 100;
+  }
+  .logo {
+    font-family: 'Orbitron', sans-serif;
+    font-weight: 900;
+    font-size: 18px;
+    color: var(--accent);
+    letter-spacing: 3px;
+    text-shadow: var(--glow-blue);
+  }
+  .logo span { color: var(--green); }
+  .hdr-meta { display: flex; gap: 24px; align-items: center; }
+  .tick-counter {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 22px;
+    color: var(--green);
+    text-shadow: var(--glow-green);
+    min-width: 90px;
+    text-align: right;
+  }
+  .tick-label { color: var(--dim); font-size: 10px; letter-spacing: 2px; }
+  .status-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--green); box-shadow: var(--glow-green); animation: pulse 1s infinite; }
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.3} }
+
+  .ctrl-bar {
+    display: flex; gap: 10px; align-items: center;
+  }
+  button {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 1px;
+    padding: 6px 16px;
+    border: 1px solid var(--border);
+    background: var(--panel);
+    color: var(--text);
+    cursor: pointer;
+    transition: all .15s;
+    text-transform: uppercase;
+  }
+  button:hover { border-color: var(--accent); color: var(--accent); }
+  button.active { background: var(--accent); color: #000; border-color: var(--accent); box-shadow: var(--glow-blue); }
+  button.danger { border-color: var(--red); }
+  button.danger:hover { background: var(--red); color: #fff; }
+
+  /* LAYOUT */
+  .main {
+    display: grid;
+    grid-template-columns: 260px 1fr;
+    grid-template-rows: auto auto auto;
+    gap: 0;
+    padding: 0;
+  }
+
+  /* PANEL BASE */
+  .panel {
+    border: 1px solid var(--border);
+    background: var(--surface);
+    position: relative;
+  }
+  .panel-title {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 10px;
+    letter-spacing: 2px;
+    padding: 8px 14px;
+    border-bottom: 1px solid var(--border);
+    color: var(--dim);
+    display: flex; align-items: center; gap: 8px;
+  }
+  .panel-title .tag {
+    background: var(--accent); color: #000;
+    font-size: 8px; padding: 1px 5px; letter-spacing: 1px;
+  }
+
+  /* TASK LIST */
+  .sidebar {
+    grid-row: 1/3;
+    display: flex; flex-direction: column;
+  }
+  .task-list { flex: 1; overflow-y: auto; }
+  .task-item {
+    padding: 10px 14px;
+    border-bottom: 1px solid var(--border);
+    cursor: pointer;
+    transition: background .1s;
+    display: flex; flex-direction: column; gap: 4px;
+  }
+  .task-item:hover { background: var(--panel); }
+  .task-item.selected { background: #0d1a2a; border-left: 2px solid var(--accent); }
+  .task-head { display: flex; justify-content: space-between; align-items: center; }
+  .task-name { font-family: 'Orbitron', sans-serif; font-size: 11px; font-weight: 700; }
+  .task-state {
+    font-size: 9px; padding: 1px 6px; letter-spacing: 1px;
+    border: 1px solid;
+  }
+  .state-running { color: var(--green); border-color: var(--green); background: #00ff8811; }
+  .state-ready   { color: var(--yellow); border-color: var(--yellow); background: #ffdd0011; }
+  .state-blocked { color: var(--orange); border-color: var(--orange); background: #ff880011; }
+  .state-suspend { color: var(--dim); border-color: var(--dim); }
+  .task-bar-bg {
+    height: 3px; background: var(--border); border-radius: 1px; overflow: hidden;
+  }
+  .task-bar-fill { height: 100%; transition: width .3s; border-radius: 1px; }
+  .task-info { display: flex; justify-content: space-between; color: var(--dim); font-size: 10px; }
+  .prio-badge {
+    font-size: 9px;
+    width: 18px; height: 18px;
+    border-radius: 50%; border: 1px solid;
+    display: flex; align-items: center; justify-content: center;
+  }
+
+  /* GANTT */
+  .gantt-panel { padding: 0; }
+  .gantt-wrap { padding: 14px; overflow-x: hidden; }
+  #gantt-canvas {
+    display: block;
+    width: 100%;
+    height: 200px;
+    background: var(--bg);
+    border: 1px solid var(--border);
+  }
+
+  /* CPU + STATS ROW */
+  .stats-row {
+    grid-column: 1 / 3;
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+  }
+
+  .stat-panel { padding: 14px; text-align: center; }
+  .stat-val {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 28px;
+    font-weight: 900;
+    line-height: 1;
+    margin: 4px 0;
+  }
+  .stat-unit { font-size: 10px; color: var(--dim); letter-spacing: 2px; }
+  .stat-label { font-size: 9px; color: var(--dim); letter-spacing: 2px; margin-top: 4px; text-transform: uppercase; }
+
+  /* SYNC PANEL */
+  .sync-panel {
+    grid-column: 1/3;
+    padding: 14px;
+  }
+  .sync-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; margin-top: 12px; }
+
+  .sync-card {
+    border: 1px solid var(--border);
+    background: var(--bg);
+    padding: 12px;
+  }
+  .sync-title { font-family: 'Orbitron', sans-serif; font-size: 10px; letter-spacing: 2px; margin-bottom: 8px; }
+
+  /* MUTEX */
+  .mutex-lock {
+    display: flex; align-items: center; gap: 10px;
+    margin-bottom: 8px;
+  }
+  .lock-icon {
+    font-size: 20px;
+    transition: all .3s;
+  }
+  .lock-owner { font-size: 11px; }
+
+  /* SEMAPHORE */
+  .sem-slots { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 6px; }
+  .sem-slot {
+    width: 22px; height: 22px; border: 1px solid var(--border);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 9px;
+    transition: all .3s;
+  }
+  .sem-slot.used { background: var(--orange); border-color: var(--orange); color: #000; }
+  .sem-slot.free { background: var(--border); }
+
+  /* QUEUE */
+  .queue-items {
+    display: flex; gap: 4px; flex-wrap: wrap; margin-top: 6px; min-height: 30px;
+  }
+  .q-item {
+    padding: 2px 7px;
+    border: 1px solid;
+    font-size: 10px;
+    animation: qpop .3s ease;
+  }
+  @keyframes qpop { from{transform:scale(.5);opacity:0} to{transform:scale(1);opacity:1} }
+
+  /* COMPARE */
+  .compare-panel {
+    grid-column: 1/3;
+    padding: 14px;
+  }
+  .cmp-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-top: 12px; }
+  .cmp-card { border: 1px solid var(--border); background: var(--bg); padding: 14px; }
+  .cmp-card h3 { font-family: 'Orbitron', sans-serif; font-size: 12px; margin-bottom: 10px; }
+  .cmp-row { display: flex; justify-content: space-between; padding: 5px 0; border-bottom: 1px solid var(--border); font-size: 11px; }
+  .cmp-row:last-child { border: none; }
+  .cmp-good { color: var(--green); }
+  .cmp-bad  { color: var(--red); }
+  .cmp-mid  { color: var(--yellow); }
+
+  /* JITTER BARS */
+  .jitter-row { display: flex; align-items: center; gap: 10px; margin: 4px 0; }
+  .jitter-label { width: 70px; font-size: 10px; color: var(--dim); }
+  .jitter-track { flex: 1; height: 12px; background: var(--border); border-radius: 1px; overflow: visible; position: relative; }
+  .jitter-fill { height: 100%; border-radius: 1px; transition: width .4s; }
+  .jitter-val { font-size: 10px; color: var(--dim); width: 50px; text-align: right; }
+
+  /* TIMELINE MINI */
+  #timeline-canvas {
+    width: 100%;
+    height: 80px;
+    display: block;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    margin-top: 10px;
+  }
+
+  /* LOG */
+  .log-panel {
+    grid-column: 1/3;
+    max-height: 140px;
+    overflow-y: auto;
+    padding: 8px 14px;
+  }
+  .log-line { font-size: 11px; padding: 2px 0; border-bottom: 1px solid #ffffff08; }
+  .log-line .ts { color: var(--dim); margin-right: 10px; }
+  .log-line.ev-switch .ev { color: var(--accent); }
+  .log-line.ev-lock   .ev { color: var(--orange); }
+  .log-line.ev-unlock .ev { color: var(--green); }
+  .log-line.ev-queue  .ev { color: var(--purple); }
+  .log-line.ev-preempt .ev { color: var(--red); }
+
+  /* scrollbar */
+  ::-webkit-scrollbar { width: 4px; height: 4px; }
+  ::-webkit-scrollbar-track { background: var(--bg); }
+  ::-webkit-scrollbar-thumb { background: var(--border); }
+
+  /* corner decorations */
+  .panel::before {
+    content: '';
+    position: absolute; top: 0; right: 0;
+    width: 12px; height: 12px;
+    border-top: 1px solid var(--accent);
+    border-right: 1px solid var(--accent);
+    opacity: .5;
+  }
+
+  /* Speed selector */
+  .speed-btn.active { background: var(--green); color: #000; border-color: var(--green); }
+
+  .badge { font-size: 9px; background: #1a2535; padding: 1px 5px; letter-spacing: 1px; margin-left: 6px; }
+  .glitch { animation: glitch .2s; }
+  @keyframes glitch {
+    0%   { transform: translate(0); }
+    20%  { transform: translate(-2px, 1px); filter: hue-rotate(90deg); }
+    40%  { transform: translate(2px, -1px); }
+    60%  { transform: translate(-1px, 0); }
+    80%  { transform: translate(1px, 1px); filter: hue-rotate(0deg); }
+    100% { transform: translate(0); }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div>
+    <div class="logo">RTOS<span>-VIZ</span></div>
+    <div style="color:var(--dim);font-size:10px;letter-spacing:2px;margin-top:2px">REAL-TIME OS SCHEDULER SIMULATOR</div>
+  </div>
+  <div class="hdr-meta">
+    <div>
+      <div class="tick-label">SYSTEM TICK</div>
+      <div class="tick-counter" id="tick-counter">0000</div>
+    </div>
+    <div style="display:flex;flex-direction:column;align-items:center;gap:4px">
+      <div class="status-dot" id="run-dot"></div>
+      <div class="tick-label" id="run-label">RUNNING</div>
+    </div>
+  </div>
+  <div class="ctrl-bar">
+    <div style="display:flex;flex-direction:column;gap:4px">
+      <div class="tick-label">SPEED</div>
+      <div style="display:flex;gap:4px">
+        <button class="speed-btn" data-ms="400">0.5×</button>
+        <button class="speed-btn active" data-ms="200">1×</button>
+        <button class="speed-btn" data-ms="80">3×</button>
+        <button class="speed-btn" data-ms="30">10×</button>
+      </div>
+    </div>
+    <button id="pause-btn" class="active" style="height:36px;margin-top:16px">⏸ PAUSE</button>
+    <button id="reset-btn" class="danger" style="height:36px;margin-top:16px">↺ RESET</button>
+  </div>
+</header>
+
+<div class="main">
+
+  <!-- SIDEBAR: TASK LIST -->
+  <div class="sidebar panel">
+    <div class="panel-title">TASK CONTROL BLOCK <span class="tag">TCB</span></div>
+    <div class="task-list" id="task-list"></div>
+    <div style="padding:10px 14px;border-top:1px solid var(--border)">
+      <div class="tick-label" style="margin-bottom:6px">SCHEDULER</div>
+      <select id="sched-mode" style="width:100%;background:var(--bg);border:1px solid var(--border);color:var(--text);padding:5px 8px;font-family:'Share Tech Mono',monospace;font-size:11px;">
+        <option value="preemptive">Preemptive Priority</option>
+        <option value="rr">Round-Robin</option>
+        <option value="edf">EDF (Earliest Deadline First)</option>
+      </select>
+      <div style="margin-top:8px;color:var(--dim);font-size:10px;line-height:1.6" id="sched-desc">
+        Highest-priority READY task always preempts current.
+      </div>
+    </div>
+  </div>
+
+  <!-- GANTT CHART -->
+  <div class="panel gantt-panel">
+    <div class="panel-title">EXECUTION TIMELINE — GANTT CHART <span class="tag">CPU</span></div>
+    <div class="gantt-wrap">
+      <canvas id="gantt-canvas"></canvas>
+    </div>
+    <canvas id="timeline-canvas" style="margin:0 14px 10px;width:calc(100% - 28px)"></canvas>
+  </div>
+
+  <!-- STATS ROW -->
+  <div class="stats-row">
+    <div class="stat-panel panel">
+      <div class="tick-label">CPU UTILIZATION</div>
+      <div class="stat-val" id="cpu-util" style="color:var(--green)">0<span style="font-size:14px">%</span></div>
+      <div style="margin-top:6px;height:4px;background:var(--border);border-radius:2px">
+        <div id="cpu-bar" style="height:100%;background:var(--green);width:0%;border-radius:2px;transition:width .4s;box-shadow:var(--glow-green)"></div>
+      </div>
+    </div>
+    <div class="stat-panel panel">
+      <div class="tick-label">CONTEXT SWITCHES</div>
+      <div class="stat-val" id="ctx-sw" style="color:var(--accent)">0</div>
+      <div class="stat-label">TOTAL</div>
+    </div>
+    <div class="stat-panel panel">
+      <div class="tick-label">DEADLINES MET</div>
+      <div class="stat-val" id="dl-met" style="color:var(--yellow)">100<span style="font-size:14px">%</span></div>
+      <div style="margin-top:6px;height:4px;background:var(--border);border-radius:2px">
+        <div id="dl-bar" style="height:100%;background:var(--yellow);width:100%;border-radius:2px;transition:width .4s"></div>
+      </div>
+    </div>
+    <div class="stat-panel panel">
+      <div class="tick-label">MAX LATENCY</div>
+      <div class="stat-val" id="max-lat" style="color:var(--orange)">0<span style="font-size:14px">µs</span></div>
+      <div class="stat-label">WORST CASE</div>
+    </div>
+  </div>
+
+  <!-- SYNC PRIMITIVES -->
+  <div class="sync-panel panel" style="grid-column:1/3">
+    <div class="panel-title">SYNCHRONIZATION PRIMITIVES <span class="tag">IPC</span></div>
+    <div class="sync-grid">
+
+      <!-- MUTEX -->
+      <div class="sync-card">
+        <div class="sync-title" style="color:var(--orange)">⬡ MUTEX — Binary Lock</div>
+        <div class="mutex-lock">
+          <div class="lock-icon" id="mutex-icon">🔓</div>
+          <div>
+            <div id="mutex-state" style="color:var(--green);font-size:11px">UNLOCKED</div>
+            <div id="mutex-owner" style="color:var(--dim);font-size:10px">owner: —</div>
+          </div>
+        </div>
+        <div style="color:var(--dim);font-size:10px;margin-bottom:6px">Waiting queue:</div>
+        <div id="mutex-queue" style="display:flex;gap:4px;min-height:22px;flex-wrap:wrap"></div>
+        <div style="margin-top:8px;font-size:10px;color:var(--dim)">
+          Priority Inheritance: <span id="pi-status" style="color:var(--green)">ACTIVE</span>
+        </div>
+      </div>
+
+      <!-- SEMAPHORE -->
+      <div class="sync-card">
+        <div class="sync-title" style="color:var(--purple)">◈ SEMAPHORE — Counting</div>
+        <div style="font-size:11px;margin-bottom:4px">
+          Count: <span id="sem-count" style="color:var(--purple);font-family:'Orbitron',sans-serif;font-size:14px">3</span> / 3
+        </div>
+        <div class="sem-slots" id="sem-slots">
+          <div class="sem-slot free">—</div>
+          <div class="sem-slot free">—</div>
+          <div class="sem-slot free">—</div>
+        </div>
+        <div style="margin-top:8px;color:var(--dim);font-size:10px">Consumers blocked:</div>
+        <div id="sem-blocked" style="display:flex;gap:4px;margin-top:4px;min-height:20px;flex-wrap:wrap"></div>
+      </div>
+
+      <!-- MESSAGE QUEUE -->
+      <div class="sync-card">
+        <div class="sync-title" style="color:var(--accent)">▶ MESSAGE QUEUE</div>
+        <div style="font-size:10px;color:var(--dim);margin-bottom:4px">
+          Depth: 6 | <span id="q-len" style="color:var(--accent)">0</span>/6 used
+        </div>
+        <div class="queue-items" id="queue-items"></div>
+        <div style="margin-top:8px;display:flex;gap:6px;flex-wrap:wrap" id="q-waiters"></div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- COMPARE RTOS vs LINUX -->
+  <div class="compare-panel panel" style="grid-column:1/3">
+    <div class="panel-title">RTOS vs LINUX PREEMPT_RT — LATENCY COMPARISON <span class="tag">ANALYSIS</span></div>
+    <div class="cmp-grid">
+      <div class="cmp-card" style="border-color:#00ff8844">
+        <h3 style="color:var(--green)">⚡ RTOS (FreeRTOS / Zephyr)</h3>
+        <div class="cmp-row"><span>Scheduler type</span><span class="cmp-good">Preemptive Priority</span></div>
+        <div class="cmp-row"><span>Worst-case latency</span><span class="cmp-good">&lt; 10 µs</span></div>
+        <div class="cmp-row"><span>Jitter</span><span class="cmp-good">&lt; 1 µs</span></div>
+        <div class="cmp-row"><span>Deadline guarantee</span><span class="cmp-good">HARD REAL-TIME</span></div>
+        <div class="cmp-row"><span>Kernel preemption</span><span class="cmp-good">Always</span></div>
+        <div class="cmp-row"><span>Memory model</span><span class="cmp-mid">Static / Pools</span></div>
+        <div style="margin-top:10px">
+          <div class="tick-label" style="margin-bottom:6px">INTERRUPT LATENCY (live simulation)</div>
+          <div class="jitter-row"><div class="jitter-label">Min</div><div class="jitter-track"><div class="jitter-fill" id="rtos-min" style="background:var(--green);width:3%"></div></div><div class="jitter-val" id="rtos-min-v">2µs</div></div>
+          <div class="jitter-row"><div class="jitter-label">Avg</div><div class="jitter-track"><div class="jitter-fill" id="rtos-avg" style="background:var(--green);width:7%"></div></div><div class="jitter-val" id="rtos-avg-v">5µs</div></div>
+          <div class="jitter-row"><div class="jitter-label">Max</div><div class="jitter-track"><div class="jitter-fill" id="rtos-max" style="background:var(--yellow);width:12%"></div></div><div class="jitter-val" id="rtos-max-v">8µs</div></div>
+        </div>
+      </div>
+
+      <div class="cmp-card" style="border-color:#ff336644">
+        <h3 style="color:var(--red)">🐧 LINUX (Standard kernel)</h3>
+        <div class="cmp-row"><span>Scheduler type</span><span class="cmp-mid">CFS + RT class</span></div>
+        <div class="cmp-row"><span>Worst-case latency</span><span class="cmp-bad">100µs – 10ms</span></div>
+        <div class="cmp-row"><span>Jitter</span><span class="cmp-bad">Variable, ms range</span></div>
+        <div class="cmp-row"><span>Deadline guarantee</span><span class="cmp-mid">SOFT REAL-TIME</span></div>
+        <div class="cmp-row"><span>Kernel preemption</span><span class="cmp-mid">Voluntary / CONFIG</span></div>
+        <div class="cmp-row"><span>Memory model</span><span class="cmp-good">Dynamic (MMU)</span></div>
+        <div style="margin-top:10px">
+          <div class="tick-label" style="margin-bottom:6px">INTERRUPT LATENCY (live simulation)</div>
+          <div class="jitter-row"><div class="jitter-label">Min</div><div class="jitter-track"><div class="jitter-fill" id="lin-min" style="background:var(--yellow);width:15%"></div></div><div class="jitter-val" id="lin-min-v">50µs</div></div>
+          <div class="jitter-row"><div class="jitter-label">Avg</div><div class="jitter-track"><div class="jitter-fill" id="lin-avg" style="background:var(--orange);width:35%"></div></div><div class="jitter-val" id="lin-avg-v">300µs</div></div>
+          <div class="jitter-row"><div class="jitter-label">Max</div><div class="jitter-track"><div class="jitter-fill" id="lin-max" style="background:var(--red);width:70%"></div></div><div class="jitter-val" id="lin-max-v">2ms</div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- PREEMPT_RT note -->
+    <div style="margin-top:14px;border:1px solid var(--border);background:var(--bg);padding:12px;font-size:11px;line-height:1.7">
+      <span style="color:var(--accent);font-family:'Orbitron',sans-serif;font-size:10px;letter-spacing:2px">LINUX PREEMPT_RT</span>
+      &nbsp;— patch series przekształca Linux w system miękkiego czasu rzeczywistego: zamienia spinlocki na RT mutexes, konwertuje przerwania na wątki (threaded IRQ), wprowadza pełną wywłaszczalność jądra.
+      Latency: <span style="color:var(--yellow)">~20-100µs</span> — znacznie lepsza niż standardowy kernel, ale wciąż gorsza od dedykowanego RTOS.
+      Używane w: <span style="color:var(--green)">ROS2, CNC (LinuxCNC), audio pro (JACK)</span>.
+    </div>
+  </div>
+
+  <!-- EVENT LOG -->
+  <div class="log-panel panel" style="grid-column:1/3">
+    <div class="panel-title" style="position:sticky;top:0;background:var(--surface);z-index:1">EVENT LOG <span class="tag">KERNEL</span></div>
+    <div id="event-log"></div>
+  </div>
+
+</div>
+
+<script>
+// =========================================================
+//  RTOS SIMULATOR CORE
+// =========================================================
+
+const TASKS = [
+  { id:0, name:'ISR_HANDLER',  prio:5, period:4,  exec:1,  color:'#ff3366', deadline:4  },
+  { id:1, name:'CTRL_LOOP',    prio:4, period:8,  exec:2,  color:'#ff8800', deadline:8  },
+  { id:2, name:'SENSOR_READ',  prio:3, period:12, exec:2,  color:'#00d4ff', deadline:12 },
+  { id:3, name:'COMM_TASK',    prio:2, period:20, exec:3,  color:'#aa44ff', deadline:20 },
+  { id:4, name:'LOGGER',       prio:1, period:30, exec:4,  color:'#00ff88', deadline:30 },
+];
+
+let state = {
+  tick: 0,
+  running: null,    // task id or null (idle)
+  taskState: [],    // per-task live data
+  ganttHistory: [], // [{tick, taskId}]
+  ctxSwitches: 0,
+  deadlinesMet: 0,
+  deadlinesTotal: 0,
+  maxLatency: 0,
+  cpuBusy: 0,
+  mutex: { locked: false, owner: null, queue: [] },
+  semaphore: { count: 3, max: 3, blocked: [] },
+  msgQueue: [],
+  paused: false,
+  speed: 200,
+  schedMode: 'preemptive',
+  log: [],
+  rtosSamples: [],
+  linSamples: [],
+};
+
+function initState() {
+  state.taskState = TASKS.map(t => ({
+    ...t,
+    status: 'ready',
+    nextActivation: 0,
+    execRemaining: 0,
+    execDone: 0,
+    totalExec: 0,
+    preemptions: 0,
+    deadlineCounter: 0,
+  }));
+}
+
+// =========================================================
+//  SCHEDULER LOGIC
+// =========================================================
+function tick() {
+  if(state.paused) return;
+  state.tick++;
+
+  // Activate tasks on period boundary
+  state.taskState.forEach(t => {
+    if(state.tick % t.period === 0) {
+      if(t.status !== 'running') t.status = 'ready';
+      t.execRemaining = t.exec;
+      t.deadlineCounter = t.period;
+      state.deadlinesTotal++;
+      addLog('ev-queue', `[T${t.id}] ${t.name} activated — period ${t.period} ticks`);
+    }
+    if(t.deadlineCounter > 0) t.deadlineCounter--;
+  });
+
+  // Choose next task
+  let chosen = null;
+  if(state.schedMode === 'preemptive') {
+    chosen = state.taskState
+      .filter(t => (t.status === 'ready' || t.status === 'running') && t.execRemaining > 0)
+      .sort((a,b) => b.prio - a.prio)[0] || null;
+  } else if(state.schedMode === 'rr') {
+    const eligible = state.taskState.filter(t => (t.status==='ready'||t.status==='running') && t.execRemaining>0);
+    // simple RR: rotate every 2 ticks
+    const base = (Math.floor(state.tick/2)) % (eligible.length||1);
+    chosen = eligible[base % eligible.length] || null;
+  } else { // EDF
+    chosen = state.taskState
+      .filter(t => (t.status==='ready'||t.status==='running') && t.execRemaining>0)
+      .sort((a,b) => a.deadlineCounter - b.deadlineCounter)[0] || null;
+  }
+
+  // Context switch detection
+  const prevRunning = state.running;
+  if(chosen) {
+    if(prevRunning !== chosen.id) {
+      if(prevRunning !== null && prevRunning !== undefined) {
+        const prev = state.taskState[prevRunning];
+        if(prev && prev.status === 'running') {
+          prev.status = 'ready';
+          prev.preemptions++;
+          addLog('ev-preempt', `[SCHED] PREEMPT: ${prev.name} → ${chosen.name} (prio ${chosen.prio})`);
+        }
+      }
+      state.ctxSwitches++;
+      chosen.status = 'running';
+      state.running = chosen.id;
+      addLog('ev-switch', `[SCHED] RUN: ${chosen.name} | remaining: ${chosen.execRemaining} ticks`);
+    }
+    chosen.execRemaining--;
+    chosen.execDone++;
+    chosen.totalExec++;
+    state.cpuBusy++;
+
+    if(chosen.execRemaining <= 0) {
+      chosen.status = 'suspend';
+      state.running = null;
+      state.deadlinesMet++;
+      addLog('ev-unlock', `[T${chosen.id}] ${chosen.name} COMPLETED — deadline ${chosen.deadlineCounter>0?'MET':'MISSED'}`);
+    }
+  } else {
+    state.running = null;
+  }
+
+  // Update all task states
+  state.taskState.forEach(t => {
+    if(t.id !== (chosen ? chosen.id : -1) && t.status === 'running') t.status = 'ready';
+    if(t.execRemaining <= 0 && t.status === 'ready') t.status = 'suspend';
+  });
+
+  // Gantt history
+  state.ganttHistory.push({ tick: state.tick, taskId: state.running });
+  if(state.ganttHistory.length > 120) state.ganttHistory.shift();
+
+  // Simulate mutex/sem/queue activity
+  simulateSync();
+  simulateLatency();
+
+  updateUI();
+}
+
+function simulateSync() {
+  const t = state.tick;
+  // Mutex: lock on even multiples of 7, unlock 3 ticks later
+  if(t % 7 === 0) {
+    if(!state.mutex.locked) {
+      const owner = state.taskState[Math.floor(Math.random()*3)];
+      state.mutex.locked = true;
+      state.mutex.owner = owner.name;
+      state.mutex.queue = [];
+      addLog('ev-lock', `[MUTEX] ACQUIRED by ${owner.name}`);
+    }
+  }
+  if(t % 7 === 4 && state.mutex.locked) {
+    addLog('ev-unlock', `[MUTEX] RELEASED by ${state.mutex.owner}`);
+    state.mutex.locked = false;
+    state.mutex.owner = null;
+    // random waiter
+    if(Math.random() < .4) {
+      const blocker = state.taskState[1];
+      state.mutex.queue = [blocker.name];
+    } else { state.mutex.queue = []; }
+  }
+
+  // Semaphore: produce/consume randomly
+  if(t % 5 === 0 && state.semaphore.count < state.semaphore.max) {
+    state.semaphore.count++;
+    addLog('ev-unlock', `[SEM] signal() → count=${state.semaphore.count}`);
+  }
+  if(t % 9 === 0 && state.semaphore.count > 0) {
+    state.semaphore.count--;
+    addLog('ev-lock', `[SEM] wait() → count=${state.semaphore.count}`);
+  }
+  state.semaphore.blocked = state.semaphore.count === 0 && Math.random() < .3 ? ['COMM_TASK'] : [];
+
+  // Message queue
+  if(t % 6 === 0 && state.msgQueue.length < 6) {
+    const msgs = ['ADC_VAL', 'TEMP_DATA', 'CMD_SET', 'STATUS', 'ERR_CODE', 'SYNC_PKT'];
+    const m = msgs[Math.floor(Math.random()*msgs.length)];
+    state.msgQueue.push({ label: m, color: TASKS[Math.floor(Math.random()*TASKS.length)].color });
+    addLog('ev-queue', `[QUEUE] xQueueSend → "${m}" (depth: ${state.msgQueue.length})`);
+  }
+  if(t % 8 === 0 && state.msgQueue.length > 0) {
+    const m = state.msgQueue.shift();
+    addLog('ev-switch', `[QUEUE] xQueueReceive → "${m.label}"`);
+  }
+}
+
+function simulateLatency() {
+  // RTOS: tight, ~2-10µs
+  const rtosL = 2 + Math.random() * 8;
+  state.rtosSamples.push(rtosL);
+  if(state.rtosSamples.length > 50) state.rtosSamples.shift();
+
+  // Linux: 50-2000µs
+  const linL = 50 + Math.random()*1950 * (Math.random() < .1 ? 1 : 0.15);
+  state.linSamples.push(linL);
+  if(state.linSamples.length > 50) state.linSamples.shift();
+
+  const maxR = Math.max(...state.rtosSamples);
+  if(maxR > state.maxLatency) state.maxLatency = maxR;
+}
+
+// =========================================================
+//  RENDER
+// =========================================================
+function updateUI() {
+  // Tick counter
+  document.getElementById('tick-counter').textContent = String(state.tick).padStart(4,'0');
+
+  // Task list
+  renderTaskList();
+
+  // Gantt
+  renderGantt();
+
+  // Stats
+  const util = Math.round((state.cpuBusy / Math.max(state.tick,1)) * 100);
+  document.getElementById('cpu-util').innerHTML = util + '<span style="font-size:14px">%</span>';
+  document.getElementById('cpu-bar').style.width = util + '%';
+  document.getElementById('ctx-sw').textContent = state.ctxSwitches;
+  const dlPct = state.deadlinesTotal ? Math.round(state.deadlinesMet/state.deadlinesTotal*100) : 100;
+  document.getElementById('dl-met').innerHTML = dlPct + '<span style="font-size:14px">%</span>';
+  document.getElementById('dl-bar').style.width = dlPct + '%';
+  document.getElementById('max-lat').innerHTML = state.maxLatency.toFixed(1) + '<span style="font-size:14px">µs</span>';
+
+  // Mutex
+  document.getElementById('mutex-icon').textContent = state.mutex.locked ? '🔒' : '🔓';
+  document.getElementById('mutex-state').textContent = state.mutex.locked ? 'LOCKED' : 'UNLOCKED';
+  document.getElementById('mutex-state').style.color = state.mutex.locked ? 'var(--red)' : 'var(--green)';
+  document.getElementById('mutex-owner').textContent = 'owner: ' + (state.mutex.owner || '—');
+  const mq = document.getElementById('mutex-queue');
+  mq.innerHTML = state.mutex.queue.map(n => `<div class="q-item" style="color:var(--orange);border-color:var(--orange)">${n}</div>`).join('');
+
+  // Semaphore
+  document.getElementById('sem-count').textContent = state.semaphore.count;
+  const slots = document.getElementById('sem-slots').children;
+  for(let i=0; i<3; i++) {
+    slots[i].className = 'sem-slot ' + (i < (3 - state.semaphore.count) ? 'used' : 'free');
+    slots[i].textContent = i < (3 - state.semaphore.count) ? '●' : '—';
+  }
+  document.getElementById('sem-blocked').innerHTML = state.semaphore.blocked.map(n =>
+    `<div class="q-item" style="color:var(--purple);border-color:var(--purple)">${n}</div>`).join('');
+
+  // Queue
+  document.getElementById('q-len').textContent = state.msgQueue.length;
+  document.getElementById('queue-items').innerHTML = state.msgQueue.map(m =>
+    `<div class="q-item" style="color:${m.color};border-color:${m.color}">${m.label}</div>`).join('');
+
+  // Latency bars - RTOS
+  if(state.rtosSamples.length) {
+    const mn = Math.min(...state.rtosSamples), mx = Math.max(...state.rtosSamples);
+    const av = state.rtosSamples.reduce((a,b)=>a+b)/state.rtosSamples.length;
+    document.getElementById('rtos-min').style.width = (mn/20*100)+'%';
+    document.getElementById('rtos-avg').style.width = (av/20*100)+'%';
+    document.getElementById('rtos-max').style.width = (mx/20*100)+'%';
+    document.getElementById('rtos-min-v').textContent = mn.toFixed(1)+'µs';
+    document.getElementById('rtos-avg-v').textContent = av.toFixed(1)+'µs';
+    document.getElementById('rtos-max-v').textContent = mx.toFixed(1)+'µs';
+  }
+  // Linux
+  if(state.linSamples.length) {
+    const mn = Math.min(...state.linSamples), mx = Math.max(...state.linSamples);
+    const av = state.linSamples.reduce((a,b)=>a+b)/state.linSamples.length;
+    document.getElementById('lin-min').style.width = Math.min(mn/3000*100,100)+'%';
+    document.getElementById('lin-avg').style.width = Math.min(av/3000*100,100)+'%';
+    document.getElementById('lin-max').style.width = Math.min(mx/3000*100,100)+'%';
+    document.getElementById('lin-min-v').textContent = mn.toFixed(0)+'µs';
+    document.getElementById('lin-avg-v').textContent = av.toFixed(0)+'µs';
+    document.getElementById('lin-max-v').textContent = mx>999 ? (mx/1000).toFixed(2)+'ms' : mx.toFixed(0)+'µs';
+  }
+
+  // Log
+  renderLog();
+}
+
+function renderTaskList() {
+  const el = document.getElementById('task-list');
+  el.innerHTML = state.taskState.map(t => {
+    const pct = t.exec > 0 ? ((t.exec - t.execRemaining) / t.exec * 100) : 100;
+    const stateClass = {running:'state-running',ready:'state-ready',blocked:'state-blocked',suspend:'state-suspend'}[t.status]||'state-suspend';
+    return `<div class="task-item ${state.running===t.id?'selected':''}">
+      <div class="task-head">
+        <div class="task-name" style="color:${t.color}">${t.name}</div>
+        <div style="display:flex;align-items:center;gap:6px">
+          <div class="prio-badge" style="color:${t.color};border-color:${t.color}">${t.prio}</div>
+          <div class="task-state ${stateClass}">${t.status.toUpperCase()}</div>
+        </div>
+      </div>
+      <div class="task-bar-bg">
+        <div class="task-bar-fill" style="width:${pct}%;background:${t.color}"></div>
+      </div>
+      <div class="task-info">
+        <span>P=${t.period} E=${t.exec}</span>
+        <span>exec: ${t.totalExec} ticks</span>
+        <span>ctx: ${t.preemptions}</span>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function renderGantt() {
+  const canvas = document.getElementById('gantt-canvas');
+  const ctx = canvas.getContext('2d');
+  canvas.width = canvas.offsetWidth * window.devicePixelRatio;
+  canvas.height = canvas.offsetHeight * window.devicePixelRatio;
+  ctx.scale(window.devicePixelRatio, window.devicePixelRatio);
+  const W = canvas.offsetWidth, H = canvas.offsetHeight;
+
+  ctx.fillStyle = '#070a0f';
+  ctx.fillRect(0,0,W,H);
+
+  // Grid lines
+  ctx.strokeStyle = 'rgba(30,45,61,0.5)';
+  ctx.lineWidth = .5;
+  for(let x=0;x<W;x+=20) { ctx.beginPath(); ctx.moveTo(x,0); ctx.lineTo(x,H); ctx.stroke(); }
+  for(let y=0;y<H;y+=20) { ctx.beginPath(); ctx.moveTo(0,y); ctx.lineTo(W,y); ctx.stroke(); }
+
+  const nTasks = TASKS.length + 1; // +idle
+  const rowH = H / nTasks;
+  const history = state.ganttHistory;
+  const maxTicks = 100;
+  const startTick = Math.max(0, state.tick - maxTicks);
+  const visHistory = history.filter(h => h.tick >= startTick);
+
+  // Task labels
+  TASKS.forEach((t,i) => {
+    ctx.fillStyle = t.color + '44';
+    ctx.fillRect(0, i * rowH, 68, rowH-1);
+    ctx.fillStyle = t.color;
+    ctx.font = `bold 9px "Share Tech Mono", monospace`;
+    ctx.fillText(t.name.substring(0,10), 4, i*rowH + rowH/2 + 3);
+
+    // horizontal separators
+    ctx.strokeStyle = 'rgba(30,45,61,0.8)';
+    ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(0,(i+1)*rowH); ctx.lineTo(W,(i+1)*rowH); ctx.stroke();
+  });
+  // IDLE row
+  ctx.fillStyle = '#1e2d3d44';
+  ctx.fillRect(0, TASKS.length*rowH, 68, rowH-1);
+  ctx.fillStyle = '#4a5568';
+  ctx.font = 'bold 9px "Share Tech Mono"';
+  ctx.fillText('IDLE', 4, TASKS.length*rowH + rowH/2 + 3);
+
+  // Draw execution blocks
+  const tickW = (W - 70) / maxTicks;
+  visHistory.forEach(h => {
+    const xPos = 70 + (h.tick - startTick - 1) * tickW;
+    const taskIdx = h.taskId !== null ? h.taskId : TASKS.length;
+    const color = h.taskId !== null ? TASKS[h.taskId].color : '#1e2d3d';
+    ctx.fillStyle = color + (h.taskId !== null ? 'cc' : '99');
+    ctx.fillRect(xPos, taskIdx * rowH + 2, Math.max(tickW - .5, 1), rowH - 4);
+
+    // glow on running
+    if(h.taskId === state.running && h.tick === state.tick) {
+      ctx.shadowColor = color;
+      ctx.shadowBlur = 8;
+      ctx.fillStyle = color;
+      ctx.fillRect(xPos, taskIdx * rowH + 1, Math.max(tickW - .5, 1), rowH - 2);
+      ctx.shadowBlur = 0;
+    }
+  });
+
+  // Tick numbers at top
+  ctx.fillStyle = '#4a5568';
+  ctx.font = '8px "Share Tech Mono"';
+  for(let t=startTick; t<=state.tick; t+=10) {
+    const x = 70 + (t - startTick) * tickW;
+    ctx.fillText(t, x, 8);
+  }
+
+  // Current tick line
+  const curX = 70 + (state.tick - startTick) * tickW;
+  ctx.strokeStyle = '#ffffff33';
+  ctx.lineWidth = 1;
+  ctx.setLineDash([3,3]);
+  ctx.beginPath(); ctx.moveTo(curX, 0); ctx.lineTo(curX, H); ctx.stroke();
+  ctx.setLineDash([]);
+
+  // Timeline mini latency chart
+  renderTimeline();
+}
+
+function renderTimeline() {
+  const canvas = document.getElementById('timeline-canvas');
+  if(!canvas) return;
+  const ctx = canvas.getContext('2d');
+  canvas.width = canvas.offsetWidth * window.devicePixelRatio;
+  canvas.height = canvas.offsetHeight * window.devicePixelRatio;
+  ctx.scale(window.devicePixelRatio, window.devicePixelRatio);
+  const W = canvas.offsetWidth, H = canvas.offsetHeight;
+
+  ctx.fillStyle = '#070a0f';
+  ctx.fillRect(0,0,W,H);
+
+  // Grid
+  ctx.strokeStyle = 'rgba(30,45,61,0.3)'; ctx.lineWidth = .5;
+  for(let x=0;x<W;x+=40) { ctx.beginPath(); ctx.moveTo(x,0); ctx.lineTo(x,H); ctx.stroke(); }
+  [H*.25, H*.5, H*.75].forEach(y => { ctx.beginPath(); ctx.moveTo(0,y); ctx.lineTo(W,y); ctx.stroke(); });
+
+  const drawLine = (samples, color, maxVal) => {
+    if(samples.length < 2) return;
+    ctx.strokeStyle = color; ctx.lineWidth = 1.5;
+    ctx.shadowColor = color; ctx.shadowBlur = 4;
+    ctx.beginPath();
+    samples.forEach((v,i) => {
+      const x = (i / (samples.length-1)) * W;
+      const y = H - (v / maxVal * H * .9) - H*.05;
+      i===0 ? ctx.moveTo(x,y) : ctx.lineTo(x,y);
+    });
+    ctx.stroke();
+    ctx.shadowBlur = 0;
+  };
+
+  // Normalize both to RTOS max for visual comparison
+  const linMax = 3000;
+  // Draw Linux (red) first, then RTOS (green) on top
+  if(state.linSamples.length) drawLine(state.linSamples, '#ff3366', linMax);
+  if(state.rtosSamples.length) drawLine(state.rtosSamples, '#00ff88', linMax);
+
+  // Labels
+  ctx.font = '9px "Share Tech Mono"';
+  ctx.fillStyle = '#00ff88'; ctx.fillText('RTOS', 4, H-4);
+  ctx.fillStyle = '#ff3366'; ctx.fillText('LINUX', 40, H-4);
+  ctx.fillStyle = '#4a5568'; ctx.fillText('INTERRUPT LATENCY COMPARISON', W/2-80, H-4);
+}
+
+function addLog(cls, msg) {
+  state.log.unshift({ cls, msg, tick: state.tick });
+  if(state.log.length > 50) state.log.pop();
+}
+
+function renderLog() {
+  const el = document.getElementById('event-log');
+  el.innerHTML = state.log.slice(0,20).map(e =>
+    `<div class="log-line ${e.cls}">
+      <span class="ts">[${String(e.tick).padStart(4,'0')}]</span>
+      <span class="ev">${e.msg}</span>
+    </div>`
+  ).join('');
+}
+
+// =========================================================
+//  CONTROLS
+// =========================================================
+let interval = null;
+
+function startLoop() {
+  clearInterval(interval);
+  interval = setInterval(tick, state.speed);
+}
+
+document.getElementById('pause-btn').addEventListener('click', function() {
+  state.paused = !state.paused;
+  this.textContent = state.paused ? '▶ RESUME' : '⏸ PAUSE';
+  this.classList.toggle('active', !state.paused);
+  document.getElementById('run-dot').style.background = state.paused ? 'var(--red)' : 'var(--green)';
+  document.getElementById('run-label').textContent = state.paused ? 'PAUSED' : 'RUNNING';
+});
+
+document.getElementById('reset-btn').addEventListener('click', function() {
+  clearInterval(interval);
+  state = { ...state, tick:0, running:null, ganttHistory:[], ctxSwitches:0,
+    deadlinesMet:0, deadlinesTotal:0, maxLatency:0, cpuBusy:0,
+    mutex:{locked:false,owner:null,queue:[]}, semaphore:{count:3,max:3,blocked:[]},
+    msgQueue:[], log:[], rtosSamples:[], linSamples:[], paused:false };
+  initState();
+  startLoop();
+  document.getElementById('tick-counter').classList.add('glitch');
+  setTimeout(() => document.getElementById('tick-counter').classList.remove('glitch'), 200);
+});
+
+document.querySelectorAll('.speed-btn').forEach(btn => {
+  btn.addEventListener('click', function() {
+    document.querySelectorAll('.speed-btn').forEach(b => b.classList.remove('active'));
+    this.classList.add('active');
+    state.speed = parseInt(this.dataset.ms);
+    startLoop();
+  });
+});
+
+document.getElementById('sched-mode').addEventListener('change', function() {
+  state.schedMode = this.value;
+  const descs = {
+    preemptive: 'Highest-priority READY task always preempts current.',
+    rr: 'Tasks share CPU in rotation, equal time quantum.',
+    edf: 'Task with nearest deadline runs first. Optimal for utilization.'
+  };
+  document.getElementById('sched-desc').textContent = descs[this.value];
+});
+
+// =========================================================
+//  INIT
+// =========================================================
+initState();
+startLoop();
+updateUI();
+</script>
+</body>
+</html>
