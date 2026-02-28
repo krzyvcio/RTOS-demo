@@ -1,148 +1,138 @@
 # Wykład 10: Optymalizacja globalna systemu
 
-## Po co "globalna optymalizacja"
-W humanoidzie prawie każda trudna decyzja jest kompromisem:
-- stabilność vs. szybkość,
-- energia vs. dynamika,
-- dokładność śledzenia vs. bezpieczeństwo kontaktu,
-- komfort mechaniczny (jerk) vs. czas wykonania.
+## Czesc I: Wstep teoretyczny — kompromisy w kazdym miejscu
 
-Optymalizacja jest językiem, który pozwala te kompromisy opisać jawnie:
-- funkcja kosztu koduje "co jest ważne",
-- ograniczenia kodują "czego nie wolno".
+### 1.1 Geneza — kazda decyzja jest kompromisem
 
-W praktyce optymalizacja występuje w:
-- IK z ograniczeniami (QP/NLP),
-- whole-body control (QP z dynamiką i tarciem),
-- MPC (predykcja na horyzoncie),
-- estymacji (LS/MAP w factor graph),
-- planowaniu trajektorii (TrajOpt/CHOMP/STOMP).
+W humanoidzie każda trudna decyzja to kompromis:
+- Stabilność vs szybkość
+- Energia vs dynamika
+- Dokładność vs bezpieczeństwo kontaktu
+- Komfort (jerk) vs czas wykonania
 
-## Grafy: koszty, ograniczenia i zależności
-### Graf kosztów i ograniczeń
-Węzły to zmienne decyzyjne, a krawędzie/faktory to:
-- składniki kosztu,
-- ograniczenia równościowe i nierównościowe.
+### 1.2 Optymalizacja jako jezyk
 
-To jest analogiczne do factor graph w estymacji:
-- tu jednak optymalizujesz "sterowania/traektorie", a nie "stany".
+Optymalizacja pozwala te kompromisy opisać jawnie:
+- Funkcja kosztu = "co jest ważne"
+- Ograniczenia = "czego nie wolno"
 
-### Graf zależności zmiennych
-To praktyczny sposób, by zrozumieć:
-- które zmienne wpływają na które ograniczenia,
-- gdzie jest sprzężenie (np. kontakt wpływa na dynamikę i jednocześnie na kolizje),
-- jak rozbić problem na podproblemy (dekompozycja).
+---
 
-## Klasy problemów optymalizacji
-### LP (Linear Programming)
+## Czesc II: Klasy problemow
+
+### 2.1 LP (Linear Programming)
+
 ```text
-min    c^T x
-takie że  A x <= b,  Aeq x = beq
+min cᵀx  takie że Ax ≤ b
 ```
-Zalety: szybkie, przewidywalne.
-W robotyce LP pojawia się np. w prostych alokacjach zasobów i ograniczeniach liniowych.
 
-### QP (Quadratic Programming)
+### 2.2 QP (Quadratic Programming)
+
 ```text
-min    1/2 x^T H x + c^T x
-takie że  A x <= b,  Aeq x = beq
+min ½xᵀHx + cᵀx  takie że Ax ≤ b
 ```
-To jest koń roboczy humanoidów, bo:
-- kwadratowy koszt dobrze modeluje "błędy" i regularizacje,
-- ograniczenia liniowe łatwo kodują limity i aproksymacje stożka tarcia.
 
-### NLP (Nonlinear Programming)
-Gdy masz nieliniowe ograniczenia/cele (dokładna geometria, dokładna dynamika), potrzebujesz NLP.
-Koszt: trudniejsze zbieżności i większy czas obliczeń.
+To koń roboczy humanoidów!
 
-### MILP/MIQP (mieszane z całkowitymi)
-Pojawiają się, gdy masz decyzje dyskretne:
-- wybór kontaktu (stopa lewa/prawa),
-- wybór trybu (chodzenie vs. wspinanie),
-- planowanie sekwencji zdarzeń.
+### 2.3 NLP
 
-Zalety: formalnie uchwycisz logikę.
-Wada: obliczeniowo ciężkie; często używa się ich offline lub na małych podproblemach.
+Gdy nieliniowe ograniczenia/koszty
 
-## Wypukłość: dlaczego wszyscy jej chcą
-Jeśli problem jest wypukły:
-- optimum jest globalne,
-- solvery są stabilne,
-- zachowanie jest przewidywalne.
+---
 
-Dlatego praktyczna zasada:
-- modeluj tak, by najwięcej było wypukłe (QP), a nieliniowości przybliżaj lokalnie,
-- jeśli musisz użyć NLP, pilnuj dobrego startu i regularizacji.
+## Czesc III: Wypuklosc
 
-## Metody rozwiązywania: gradient, Newton, quasi-Newton, interior-point
-Gradient descent:
-- prosty, ale wolny i wrażliwy na skalowanie.
+### 3.1 Dlaczego wypuklosc jest wazna
 
-Newton:
-- szybki lokalnie, wymaga Hessianu (lub jego przybliżenia) i dobrego startu.
+- Optimum globalne
+- Stabilne solwery
+- Przewidywalne zachowanie
 
-Quasi-Newton (np. BFGS/L-BFGS):
-- kompromis: dobra szybkość bez pełnego Hessianu.
+### 3.2 Praktyczna zasada
 
-Interior-point:
-- standard dla LP/QP w wielu solverach,
-- dobrze działa dla problemów z ograniczeniami.
+Modeluj tak, by najwięcej było wypukłe (QP)!
 
-W robotyce online liczy się:
-- deterministyczny czas,
-- odporność na problemy numeryczne,
-- degradacja: solver nie może "zawiesić" systemu sterowania.
+---
 
-## Skalowanie i stabilność numeryczna: rzeczy, które bolą najbardziej
-Najczęstsze źródła problemów:
-- różne jednostki i skale (metry vs. radiany vs. niutony),
-- źle dobrane wagi w koszcie (jedna dominuje i rozjeżdża pozostałe),
-- słabe uwarunkowanie macierzy (osobliwości, niemal zależne ograniczenia),
-- saturacje i sprzeczne ograniczenia (problem staje się niewykonalny).
+## Czesc IV: Metody rozwiazywania
 
-Praktyczne techniki:
-- normalizacja zmiennych,
-- regularizacja (np. dodanie `ε I` do `H`),
-- slack variables (miękkie naruszenia) z dużą karą zamiast twardej niewykonalności,
-- monitorowanie statusu solvera i fallback.
+### 4.1 Gradient descent
 
-## Online vs. offline
-Offline:
-- dokładniejsze modele, większe NLP/MILP, dłuższy czas,
-- używane do: strojenia, generowania trajektorii bazowych, identyfikacji parametrów.
+Prosty, ale wolny i wrażliwy na skalowanie.
 
-Online:
-- krótkie horyzonty, QP, MPC, szybkie replany,
-- nacisk na deterministyczny runtime i bezpieczeństwo.
+### 4.2 Newton
 
-## Projektowanie funkcji kosztu: inżynieria kompromisów
+Szybki lokalnie, wymaga Hessianu.
+
+### 4.3 Quasi-Newton (BFGS/L-BFGS)
+
+Kompromis: dobra szybkość bez pełnego Hessianu.
+
+---
+
+## Czesc V: Skalowanie i stabilnosc numeryczna
+
+### 5.1 Typowe problemy
+
+- Różne jednostki (metry vs radiany)
+- Źle dobrane wagi
+- Słabe uwarunkowanie macierzy
+- Sprzeczne ograniczenia
+
+### 5.2 Techniki
+
+- Normalizacja zmiennych
+- Regularizacja (εI)
+- Slack variables
+
+---
+
+## Czesc VI: Online vs offline
+
+### 6.1 Offline
+
+- Dokładniejsze modele
+- Większe NLP/MILP
+- Strojenie, generowanie trajektorii
+
+### 6.2 Online
+
+- Krótkie horyzonty
+- QP, MPC
+- Determinizm runtime
+
+---
+
+## Czesc VII: Praktyka inzynierska
+
+### 7.1 Funkcja kosztu
+
 Typowa struktura:
-- błąd celu (task),
-- regularizacja postawy (posture),
-- gładkość (qd/qdd/jerk),
-- kary na sterowania (energia, saturacje),
-- kary za bliskość ograniczeń (margines tarcia, margines kolizji).
+- Błąd celu (task)
+- Regularizacja postawy
+- Gładkość (jerk)
+- Kary za sterowanie
+- Marginesy bezpieczeństwa
 
-Ważne:
-- bezpieczeństwo i stabilność powinny mieć priorytet nad "ładnym śledzeniem",
-- wagi dobierasz na danych i scenariuszach, nie na intuicji.
+### 7.2 Checklisty
 
-## Checklisty
-- każda zmienna ma sensowną skalę i jednostkę,
-- każdy ogranicznik ma uzasadnienie i jest mierzony w runtime,
-- solver ma limit czasu i mechanizm fallback,
-- logujesz: status, naruszenia, kondycję macierzy i wartości kosztu.
+- [ ] Każda zmienna ma sensowną skalę
+- [ ] Solver ma limit czasu i fallback
+- [ ] Loguj: status, naruszenia, kondycję
 
-## Pytania do studentów
-1. Dlaczego skalowanie zmiennych i jednostek ma krytyczny wpływ na stabilność solvera?
-2. Kiedy QP jest wystarczające, a kiedy musisz przejść do NLP/SQP?
-3. Jak zaprojektujesz slack variables, żeby uniknąć niewykonalności bez „psucia” bezpieczeństwa?
-4. Jakie metryki numeryczne (kondycja, naruszenia) będziesz monitorować w runtime?
+---
 
-## Projekty studenckie
-- QP z dwoma zadaniami (task + regularizacja postawy) i ograniczeniami limitów + analiza wpływu wag.
-- „Solver guard”: limit czasu + fallback + logowanie statusów solvera.
-- Eksperyment skalowania: te same dane w różnych jednostkach i obserwacja wpływu na zbieżność.
+## Czesc VIII: Pytania do dyskusji
 
-## BONUS
-- Najlepsza funkcja kosztu to taka, która koduje priorytety bezpieczeństwa zanim zacznie „upiększać” śledzenie celu; w praktyce to często oznacza twarde ograniczenia + miękkie cele.
+1. Dlaczego skalowanie zmiennych jest krytyczne?
+2. Kiedy QP wystarczy, a kiedy NLP?
+
+---
+
+## BONUS: Bezpieczeństwo w koszcie
+
+Najlepsza funkcja kosztu koduje priorytety bezpieczeństwa ZANIM zacznie "upiększać" śledzenie!
+
+---
+
+*(Koniec wykladu 10)*

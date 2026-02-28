@@ -1,17 +1,17 @@
 {
   "format": 1,
   "restore": {
-    "c:\\projekty\\RTOS-demo\\.minimax\\skills\\minimax-docx\\src\\DocForge.csproj": {}
+    "C:\\projekty\\RTOS-demo\\.minimax\\skills\\minimax-docx\\src\\DocForge.csproj": {}
   },
   "projects": {
-    "c:\\projekty\\RTOS-demo\\.minimax\\skills\\minimax-docx\\src\\DocForge.csproj": {
+    "C:\\projekty\\RTOS-demo\\.minimax\\skills\\minimax-docx\\src\\DocForge.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "c:\\projekty\\RTOS-demo\\.minimax\\skills\\minimax-docx\\src\\DocForge.csproj",
+        "projectUniqueName": "C:\\projekty\\RTOS-demo\\.minimax\\skills\\minimax-docx\\src\\DocForge.csproj",
         "projectName": "DocForge",
-        "projectPath": "c:\\projekty\\RTOS-demo\\.minimax\\skills\\minimax-docx\\src\\DocForge.csproj",
+        "projectPath": "C:\\projekty\\RTOS-demo\\.minimax\\skills\\minimax-docx\\src\\DocForge.csproj",
         "packagesPath": "C:\\Users\\Michał\\.nuget\\packages\\",
-        "outputPath": "c:\\projekty\\RTOS-demo\\.minimax\\skills\\minimax-docx\\src\\obj\\",
+        "outputPath": "C:\\projekty\\RTOS-demo\\.minimax\\skills\\minimax-docx\\src\\obj\\",
         "projectStyle": "PackageReference",
         "configFilePaths": [
           "C:\\Users\\Michał\\AppData\\Roaming\\NuGet\\NuGet.Config"

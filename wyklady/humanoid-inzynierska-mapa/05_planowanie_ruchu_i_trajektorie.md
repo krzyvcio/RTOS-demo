@@ -1,162 +1,203 @@
 # Wykład 5: Planowanie ruchu, trajektorie
 
-## Co znaczy "planowanie" w humanoidzie
-Planowanie ruchu to nie jeden algorytm, tylko pipeline:
-- wybór celu i strategii (np. podejść, sięgnąć, postawić stopę),
-- plan geometryczny (bez kolizji),
-- plan dynamiczny (wykonalny z ograniczeniami sił i momentów),
-- generacja trajektorii (gładkość, jerk, ograniczenia),
-- wykonanie z kontrolą i replanningiem w pętli (bo świat jest niepewny).
+## Czesc I: Wstep teoretyczny — czym jest planowanie ruchu
 
-W humanoidzie planowanie obejmuje także:
-- planowanie kontaktów (kiedy i gdzie stawiam stopę),
-- stabilność (nie wywrócić się),
-- bezpieczeństwo w pobliżu człowieka.
+### 1.1 Geneza — od celu do ruchu
 
-## Grafy i struktury
-### Graf stanów
-Stan może być różnie zdefiniowany:
-- konfiguracja przegubów `q`,
-- pozycja bazy + konfiguracja (dla ruchu całego ciała),
-- abstrakcyjny stan chodu (np. lewa stopa w kontakcie, prawa w locie).
+Masz zadanie: "podnieś kubek ze stołu". Co musisz zrobić?
 
-W planowaniu często używa się stanu o mniejszym wymiarze niż pełne `q`, bo pełny stan humanoida jest ogromny.
+1. **Gdzie jest kubek?** (percepcja)
+2. **Jak do niego podejść?** (planowanie)
+3. **Jaką trasą?** (trajektoria)
+4. **Co jeśli przeszkoda?** (unikanie kolizji)
 
-### Graf C-space i kolizji
-Przestrzeń konfiguracji C-space to przestrzeń wszystkich `q`.
-Przeszkody w świecie mapują się na obszary niedozwolone w C-space.
-Praktycznie:
-- sprawdzasz kolizje przez collision checking na geometrii (mesh, kapsuły),
-- do planowania w czasie rzeczywistym często stosuje się uproszczone bryły (capsule/sphere).
+To jest planowanie ruchu!
 
-### Drzewa przeszukiwania: RRT, RRT*
-RRT:
-- buduje drzewo przez losowe próbkowanie,
-- dobrze działa w wysokich wymiarach,
-- nie gwarantuje optimum, ale szybko znajduje "jakąś" ścieżkę.
+### 1.2 Pipeline planowania
 
-RRT*:
-- z czasem poprawia rozwiązanie (asymptotycznie optymalne),
-- jest wolniejszy, ale daje lepsze trajektorie przy dłuższym czasie planowania.
+```
+[Cel] → [Strategia] → [Plan geometryczny] → [Trajektoria] → [Wykonanie]
+```
 
-Klucz praktyczny:
-- wydajność zależy głównie od szybkości collision checkera i heurystyk próbkowania.
+Każdy etap może zawieść — system musi być odporny.
 
-### PRM i roadmap
-PRM:
-- precomputuje graf połączeń w C-space,
-- świetne, gdy środowisko jest w miarę stałe i masz wiele zapytań.
+### 1.3 Specyfika humanoida
 
-Roadmap:
-- ogólna idea: graf przejezdności, w którym wyszukujesz ścieżkę.
+W humanoidzie dodatkowo:
+- Planowanie kontaktów (kiedy i gdzie stawiać stopę)
+- Stabilność (nie wywrócić się)
+- Bezpieczeństwo (praca obok człowieka)
 
-## Planowanie na grafach: A*, D*, Dijkstra
-Dijkstra:
-- najkrótsza ścieżka bez heurystyki.
+---
 
-A*:
-- Dijkstra + heurystyka (np. odległość do celu),
-- standard w planowaniu w siatkach i graph roadmaps.
+## Czesc II: Grafy w planowaniu
 
-D*:
-- warianty do replanningu przy zmianach mapy/otoczenia.
+### 2.1 Graf stanów
 
-W humanoidzie często:
-- globalnie planujesz w 2D/3D (mapa),
-- lokalnie rozwiązujesz problem w przestrzeni ruchu kończyny lub bazy.
+Stan może być:
+- Konfiguracja przegubów q
+- Pozycja bazy + konfiguracja
+- Abstrakcyjny stan chodu
 
-## Trajektorie: gładkość, ograniczenia i czas
-Nawet jeśli ścieżka geometryczna jest OK, nadal musisz:
-- wygenerować profil czasowy (time-parameterization),
-- ograniczyć prędkości, przyspieszenia i jerk,
-- zapewnić ciągłość (zwykle C1 lub C2).
+### 2.2 Graf C-space
 
-Typowe narzędzia:
-- splajny cubic (C2 w segmentach) i quintic (lepsza kontrola warunków brzegowych),
-- B-splines: lokalna kontrola kształtu i gładkości,
-- Bezier: wygodne warunki brzegowe i intuicyjna geometria.
+Przestrzeń wszystkich możliwych konfiguracji:
+- Wymiar = liczba przegubów
+- Przeszkody = obszary niedozwolone
 
-W praktyce humanoida liczy się jerk:
-- duży jerk = uderzenia w przekładnie, poślizgi, pobudzenie rezonansów,
-- więc ograniczanie jerk to często "ukryty" warunek stabilności mechanicznej.
+### 2.3 RRT i RRT*
 
-## Optymalizacja trajektorii: CHOMP, STOMP, TrajOpt
-Te metody traktują trajektorię jako zmienną optymalizacji.
+**RRT (Rapidly-exploring Random Tree):**
+- Losowe próbkowanie
+- Szybko znajduje ścieżkę
+- Nie gwarantuje optimum
 
-CHOMP:
-- gradientowo minimalizuje koszt gładkości + koszt kolizji.
+**RRT*:**
+- Z czasem poprawia rozwiązanie
+- Asymptotycznie optymalne
 
-STOMP:
-- wariant stochastyczny (sampling), bywa odporniejszy na lokalne minima.
+---
 
-TrajOpt:
-- zwykle formułowane jako problem (kolejno) wypukły / SQP,
-- popularny w praktycznych systemach, bo integruje ograniczenia i kolizje.
+## Czesc III: Planowanie na grafach
 
-Najważniejsze kompromisy:
-- szybkość planowania vs. jakość/bezpieczeństwo,
-- globalne optimum vs. szybki replanning,
-- dokładna geometria vs. szybkie przybliżenia kolizji.
+### 3.1 A* i Dijkstra
 
-## Ograniczenia: QP/NLP/SQP w praktyce
-W humanoidzie ograniczenia są zawsze:
-- limity przegubów i napędów,
-- ograniczenia kontaktu (tarcie, brak poślizgu),
-- ograniczenia stabilności (np. nie przekroczyć dopuszczalnego regionu podparcia),
-- ograniczenia środowiskowe (kolizje, strefy zakazane).
+**Dijkstra:** Najkrótsza ścieżka bez heurystyki
 
-QP:
-- szybkie, stabilne numerycznie, dobre do online,
-- wymaga kwadratowych kosztów i liniowych (lub liniaryzowanych) ograniczeń.
+**A*:** Dijkstra + heurystyka (odległość do celu)
 
-NLP/SQP:
-- bardziej ogólne (nieliniowe ograniczenia i koszty),
-- wolniejsze i wrażliwe na start, ale potrafią modelować więcej fizyki.
+### 3.2 Kiedy uzywac
 
-## Funkcje kosztu: energia, jerk, czas
-Typowa konstrukcja kosztu to ważona suma:
-- błąd śledzenia celu,
-- energia lub norma sterowań,
-- gładkość (przyspieszenie/jerk),
-- marginesy bezpieczeństwa od kolizji i tarcia,
-- kara za "dziwne" postawy (posture regularization).
+| Metoda | Zastosowanie |
+|--------|-------------|
+| A* | Siatki, map occupancy |
+| RRT | Wysokie wymiary, brak siatki |
+| PRM | Środowisko stałe, wiele zapytań |
 
-Dobór wag to inżynieria:
-- zbyt duża kara za czas -> agresywne trajektorie,
-- zbyt duża gładkość -> robot "nie dojdzie" na czas,
-- zbyt mała regularizacja postawy -> ekstremalne ułożenia przegubów.
+---
 
-## Planowanie kroków i kontaktów: specyfika humanoida
-Konwencjonalny podział problemu chodu:
-- planowanie stóp (footstep planning): gdzie postawić stopę,
-- planowanie tułowia/CoM: jak przesuwać masę, by utrzymać stabilność,
-- planowanie faz: kiedy stopa ma kontakt, a kiedy swing.
+## Czesc IV: Trajektorie
 
-W praktyce te warstwy często są sprzężone przez ograniczenia kontaktu i dynamikę.
-Dlatego w systemach czasu rzeczywistego:
-- globalny plan bywa prosty (kolejne kroki),
-- lokalny kontroler (WBC/MPC) robi "prawdziwą fizykę" na krótkim horyzoncie.
+### 4.1 Gładkość
 
-## Praktyka inżynierska: co działa w realnym systemie
-- Połącz planowanie globalne z lokalnym replanningiem i kontrolą reaktywną.
-- Uwzględniaj ograniczenia dynamiki i kontaktu wcześniej niż później: inaczej plan "bez kolizji" będzie niewykonalny.
-- Miej tryby degradacji: gdy planowanie nie zdąży, robot musi przejść w zachowanie bezpieczne (stop, stabilizacja).
+Trajektoria musi być:
+- Ciągła w pozycji (C0)
+- Ciągła w prędkości (C1)
+- Ciągła w przyspieszeniu (C2)
 
-## Checklisty
-- metryki jakości: margines kolizji, margines tarcia, maks. jerk, saturacje,
-- testy regresji na scenariuszach: wąskie przejście, schody, poślizg, zaburzenia,
-- monitorowanie czasu planowania i liczby prób collision checkera.
+### 4.2 Typy splajnów
 
-## Pytania do studentów
-1. Kiedy plan geometryczny jest bezużyteczny bez uwzględnienia dynamiki i kontaktu?
-2. Jakie są zalety i wady RRT/RRT* vs PRM w kontekście replanningu?
-3. Dlaczego jerk jest „ukrytym” ograniczeniem stabilności mechanicznej?
-4. Jak budujesz funkcję kosztu, żeby nie wymuszała ekstremalnych postaw?
+| Typ | Stopień | Ciągłość |
+|-----|---------|-----------|
+| Linear | 1 | C0 |
+| Cubic | 3 | C2 |
+| Quintic | 5 | C4 |
 
-## Projekty studenckie
-- Implementacja RRT dla prostego układu (2D/planarny) + porównanie z A* na siatce.
-- Generator trajektorii na splajnach (quintic) z ograniczeniem jerk + walidacja czasowa.
-- TrajOpt/SQP w wersji „toy” z ograniczeniami i kolizjami (uprościć geometrię do kapsuł).
+### 4.3 Jerk
 
-## BONUS
-- W praktycznych systemach wygrywa hybryda: plan globalny + lokalny kontroler reaktywny; projektuj od początku punkty, gdzie można robić replanning bez destabilizacji.
+> Jerk (pochodna przyspieszenia) jest krytyczny!
+
+Duży jerk = uderzenia w przekładnie = rezonanse!
+
+---
+
+## Czesc V: Optymalizacja trajektorii
+
+### 5.1 CHOMP
+
+Gradientowo minimalizuje:
+- Koszt gładkości
+- Koszt kolizji
+
+### 5.2 TrajOpt
+
+Formułowany jako SQP (Sequential Quadratic Programming):
+- Integruje ograniczenia
+- Popularny w praktyce
+
+---
+
+## Czesc VI: Ograniczenia w planowaniu
+
+### 6.1 Typowe ograniczenia
+
+- Limity przegubów
+- Limity prędkości/przyspieszenia
+- Ograniczenia kontaktu
+- Kolizje
+
+### 6.2 QP w planowaniu
+
+```python
+# QP: min ||Ax - b||² takie że Cx ≤ d
+H = A.T @ A
+f = -A.T @ b
+
+result = solve_qp(H, f, C, d)
+```
+
+---
+
+## Czesc VII: Planowanie krokow
+
+### 7.1 Warstwy chodu
+
+1. **Footstep planning** — gdzie postawić stopę
+2. **CoM planning** — jak przesuwać masę
+3. **Faza** — kiedy kontakt, kiedy lot
+
+### 7.2 W praktyce
+
+- Globalny plan bywa prosty (kolejne kroki)
+- Lokalny kontroler (WBC/MPC) robi fizykę na krótkim horyzoncie
+
+---
+
+## Czesc VIII: Praktyka inzynierska
+
+### 8.1 Checklisty
+
+- [ ] Metryki jakości: margines kolizji, margines tarcia, max jerk
+- [ ] Testy regresji na scenariuszach
+- [ ] Monitorowanie czasu planowania
+
+### 8.2 Degradacja
+
+Gdy planowanie nie zdąży → tryb bezpieczny!
+
+---
+
+## Czesc IX: Pytania do dyskusji
+
+1. Kiedy plan geometryczny jest bezużyteczny bez dynamiki?
+2. Jakie są zalety i wady RRT/RRT* vs PRM?
+3. Dlaczego jerk jest "ukrytym" ograniczeniem stabilności?
+4. Jak budujesz funkcję kosztu?
+
+---
+
+## Czesc X: Zadania praktyczne
+
+### Zadanie 1: RRT
+
+Zaimplementuj RRT dla prostego układu 2D.
+
+### Zadanie 2: Splajny
+
+Zaimplementuj generator trajektorii na splajnach quintic z ograniczeniem jerk.
+
+### Zadanie 3: TrajOpt
+
+Zaimplementuj TrajOpt z ograniczeniami i kolizjami.
+
+---
+
+## BONUS: Hybryda planowania
+
+W praktycznych systemach wygrywa hybryda: plan globalny + lokalny kontroler reaktywny!
+
+Projektuj od początku punkty replanningu!
+
+---
+
+*(Koniec wykladu 5)*

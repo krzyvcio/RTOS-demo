@@ -1,178 +1,293 @@
 # Wykład 4: Estymacja stanu, fuzja sensorów
 
-## Po co estymacja w humanoidzie
-Sterowanie i planowanie potrzebują stanu, którego nie da się wprost zmierzyć:
-- pozycja i orientacja bazy (tułów/miednica) w świecie,
-- prędkości i przyspieszenia,
-- biasy IMU (dryfty żyroskopu i akcelerometru),
-- siły kontaktu (częściowo z czujników, częściowo z estymacji),
-- stan otoczenia (pozycja obiektów, mapy, krawędzie podłoża).
+## Czesc I: Wstep teoretyczny — dlaczego estymacja jest potrzebna
 
-Fuzja sensorów jest odpowiedzią na fakt, że każdy czujnik ma inne wady:
-- IMU jest szybkie, ale dryfuje,
-- wizja jest wolniejsza i bywa zawodna, ale daje informację absolutną,
-- enkodery są dokładne lokalnie, ale nie mówią nic o poślizgu stóp.
+### 1.1 Geneza — czego nie mozemy zmierzyc bezposrednio
 
-## Grafy i struktury probabilistyczne
-W robotyce spotkasz kilka równoważnych języków opisu tego samego problemu.
+Proszę wyobrazić sobie: robot chodzi po nierównym podłożu. Jak zmierzyć:
+- Gdzie jest środek masy (CoM)?
+- Czy stopa jest już na podłodze, czy jeszcze w powietrzu?
+- Ile waży obiekt trzymany w ręce?
 
-### Bayes i modele stanu (state-space)
-Najbardziej klasyczna forma:
+**Nie da się tego zmierzyć bezpośrednio — trzeba estymować!**
+
+### 1.2 Co musimy estymowac
+
+| Co estymujemy | Czujniki | Trudność |
+|---------------|----------|----------|
+| Pozycja i orientacja bazy | IMU + enkodery + wizja | Średnia |
+| Prędkości i przyspieszenia | IMU + enkodery | Średnia |
+| Biasy IMU | IMU | Trudna |
+| Siły kontaktu | Czujniki + estymacja | Trudna |
+| Pozycja obiektów | Kamera | Zależy |
+
+### 1.3 Fuzja sensorow
+
+Każdy czujnik ma wady:
+- **IMU** — szybkie, ale dryfuje
+- **Enkodery** — dokładne lokalnie, ale nie wiedzą o poślizgu
+- **Wizja** — daje pozycję absolutną, ale wolna i zawodna
+
+**Rozwiązanie: fuzja sensorów!**
+
+---
+
+## Czesc II: Modele probabilistyczne
+
+### 2.1 Bayes i modele stanu
+
 ```text
-x_{k+1} = f(x_k, u_k) + w_k
-z_k     = h(x_k)      + v_k
+x_{k+1} = f(x_k, u_k) + w_k    [model procesu]
+z_k     = h(x_k) + v_k          [model pomiaru]
 ```
+
 gdzie:
-- `x_k` to stan (np. pozycja, orientacja, prędkość, biasy),
-- `u_k` to sterowania (np. komendy napędów),
-- `z_k` to pomiary (IMU, enkodery, kamera),
-- `w_k`, `v_k` to szumy procesu i pomiaru.
+- x_k — stan (pozycja, prędkość, biasy)
+- u_k — sterowania
+- z_k — pomiary
+- w_k, v_k — szumy
 
-### Hidden Markov Model (HMM)
-Gdy stan jest dyskretny lub ma silny komponent dyskretny:
-- tryb kontaktu (kontakt / brak kontaktu),
-- tryb awarii (OK / degraded / fail),
-- klasyfikacje środowiska (np. typ podłoża).
+### 2.2 Hidden Markov Model
 
-### Factor Graph
-Factor graph to w praktyce "system równań" opisany jako graf:
-- wierzchołki to zmienne (pozy w czasie, landmarki, biasy),
-- czynniki (faktory) to pomiary i więzy (IMU preintegration, odometria, wizja).
+Gdy stan jest dyskretny:
+- Tryb kontaktu (kontakt / brak)
+- Tryb awarii
 
-To podejście dominuje w nowoczesnych systemach SLAM i estymacji pozy, bo:
-- jest modularne (łatwo dodać nowy czujnik jako nowy faktor),
-- naturalnie rozwiązuje problem jako MAP (maximum a posteriori) przez optymalizację.
+### 2.3 Factor Graph
 
-## Kalman Filter (KF): rdzeń estymacji liniowej
+Factor graph to "system równań" jako graf:
+- Wierzchołki = zmienne (pozy w czasie, landmarki)
+- Czynniki = pomiary i więzy
+
+---
+
+## Czesc III: Kalman Filter
+
+### 3.1 Filtry Kalmana
+
 KF zakłada liniowy model z szumami Gaussa:
+
 ```text
-x_{k+1} = A x_k + B u_k + w_k
-z_k     = H x_k         + v_k
+x_{k+1} = A × x_k + B × u_k + w_k
+z_k     = H × x_k + v_k
 ```
 
-Kroki:
-1) Predykcja:
-```text
-x^- = A x + B u
-P^- = A P A^T + Q
-```
-2) Aktualizacja:
-```text
-S   = H P^- H^T + R
-K   = P^- H^T S^{-1}
-x   = x^- + K (z - H x^-)
-P   = (I - K H) P^-
+### 3.2 Kroki KF
+
+**Predykcja:**
+```python
+x_pred = A @ x + B @ u
+P_pred = A @ P @ A.T + Q
 ```
 
-Interpretacja praktyczna:
-- `Q` mówi, jak bardzo nie ufasz modelowi,
-- `R` mówi, jak bardzo nie ufasz pomiarom,
-- `P` to niepewność stanu, która rośnie bez pomiarów absolutnych.
-
-## EKF i UKF: nieliniowość w praktyce
-W humanoidzie większość modeli jest nieliniowa (rotacje, kontakty).
-
-EKF (Extended KF):
-- linearyzuje `f` i `h` w punkcie pracy (Jacobianami),
-- jest szybki, ale bywa wrażliwy na złe linearyzacje i outliery.
-
-UKF (Unscented KF):
-- zamiast Jacobianów używa punktów sigma,
-- często lepiej znosi nieliniowość przy podobnym koszcie,
-- nadal zakłada "mniej więcej" Gaussowskość rozkładów.
-
-Praktyczny wybór:
-- EKF wygrywa prostotą w systemach wbudowanych,
-- UKF wygrywa, gdy trudno o poprawne pochodne albo nieliniowość jest duża,
-- factor graph wygrywa, gdy masz dużo czujników i zależy Ci na globalnej spójności.
-
-## Particle Filter: gdy Gauss nie wystarcza
-Particle filter reprezentuje rozkład jako chmurę próbek.
-To sensowne, gdy:
-- rozkład jest wielomodalny (np. lokalizacja z symetriami),
-- obserwacje są bardzo nieliniowe,
-- chcesz naturalnie kodować ograniczenia nieliniowe.
-
-Koszt:
-- większe obliczenia,
-- ryzyko degeneracji próbek (wymaga resamplingu i dobrego modelu).
-
-## Least Squares, WLS i MAP jako optymalizacja
-Bardzo dużo problemów estymacji sprowadza się do postaci:
-```text
-min_x  Σ_i || r_i(x) ||_{W_i}^2
+**Aktualizacja:**
+```python
+S = H @ P_pred @ H.T + R
+K = P_pred @ H.T @ np.linalg.inv(S)
+x = x_pred + K @ (z - H @ x_pred)
+P = (I - K @ H) @ P_pred
 ```
-gdzie `r_i(x)` to residuum pomiaru (różnica "pomiary - model").
-Dla szumów Gaussa jest to równoważne MAP.
 
-Gauss–Newton:
-- iteracyjnie rozwiązuje liniowe przybliżenie problemu LS,
-- jest szybki, gdy residua są "w miarę" liniowe w pobliżu optimum.
+### 3.3 Interpretacja praktyczna
 
-Levenberg–Marquardt:
-- dodaje tłumienie (regularizację) i stabilizuje w trudnych przypadkach,
-- działa podobnie jak DLS w IK, tylko w przestrzeni estymacji.
+- **Q** — jak bardzo nie ufasz modelowi
+- **R** — jak bardzo nie ufasz pomiarom
+- **P** — niepewność stanu
 
-## SLAM: pose graph i bundle adjustment
-Pose graph optimization:
-- zmienne to pozy w kolejnych chwilach,
-- faktory to odometria/IMU/wizja (relacje między pozami).
-To daje spójność globalną i korektę dryfu.
+---
 
-Bundle adjustment:
-- do pozy dochodzą landmarki/parametry kamery,
-- rozwiązuje się duży problem nieliniowej optymalizacji.
+## Czesc IV: EKF i UKF
 
-W humanoidzie nie zawsze robisz "pełny SLAM":
-- czasem wystarczy "localization in a map",
-- czasem estymacja bazy + orientacji i wysokości podłoża.
+### 4.1 EKF (Extended KF)
 
-## Kluczowe aspekty wdrożeniowe
-### Synchronizacja czasu i opóźnienia
-Fuzja jest tak dobra, jak dobra jest oś czasu.
-Typowe problemy:
-- różne zegary czujników,
-- opóźnienia przesyłu i przetwarzania (kamera),
-- jitter w RT pętli estymacji.
+Linearyzuje f() i h() przez Jacobiany:
 
-Standardowa praktyka:
-- stempluj pomiary możliwie blisko sprzętu,
-- w estymatorze jawnie uwzględnij opóźnienie (np. buffer stanów i update w przeszłości),
-- monitoruj statystyki opóźnień jako metrykę jakości.
+```python
+# Linearyzacja
+F = jacobian_f(x, u)  # ∂f/∂x
+H = jacobian_h(x)      # ∂h/∂x
+```
 
-### Outliery i odporność (robustness)
-Wizja i czujniki kontaktu generują outliery.
-Niezbędne elementy:
-- gating (odrzucanie pomiarów o zbyt dużej innowacji),
-- funkcje kosztu odporne (Huber/Cauchy) w factor graph,
-- fallback na inne sensory w razie utraty jednego strumienia.
+### 4.2 UKF (Unscented KF)
 
-### Obserwowalność i dryf
-Jeśli nie masz absolutnych pomiarów (np. globalnej pozycji), pewne składowe stanu będą dryfować.
-Przykład:
-- IMU + enkodery bez wzrokowego/absolutnego odniesienia dają dryf pozycji bazy.
+Używa punktów sigma zamiast Jacobianów:
 
-Dlatego w architekturze często rozdziela się:
-- szybką estymację lokalną (IMU/enkodery, wysoka częstotliwość),
-- wolną korektę globalną (wizja/mapa, niższa częstotliwość).
+```python
+# Generowanie punktów sigma
+sigma_points = sigma_points(x, P, kappa)
 
-## Checklisty
-- Zdefiniuj stan `x`: co jest estymowane (pozy, prędkości, biasy, kontakty).
-- Zdefiniuj ramki i transformacje sensorów (kalibracja extrinsic).
-- Loguj innowację i jej statystyki (wykrywanie rozjazdów).
-- Dodaj mechanizm resetu/rekonwergencji (po upadku, po dużym outlierze).
-- Mierz koszty obliczeń i pilnuj deterministycznego czasu iteracji.
+# Propagacja przez nie liniowy model
+sigma_predicted = f(sigma_points)
 
-## Pytania do studentów
+# Obliczanie średniej i kowariancji
+x_pred = weighted_mean(sigma_predicted)
+P_pred = weighted_cov(sigma_predicted)
+```
+
+### 4.3 Kiedy co wybrac
+
+| Metoda | Zalety | Wady |
+|--------|--------|------|
+| EKF | Prosta, szybka | Wrażliwa na linearyzację |
+| UKF | Lepiej dla nieliniowości | Więcej obliczeń |
+| Factor Graph | Modularna | Wolniejsza online |
+
+---
+
+## Czesc V: Particle Filter
+
+### 5.1 Kiedy Gauss nie wystarcza
+
+Gdy rozkład jest wielomodalny:
+- Lokalizacja z symetriami
+- Obserwacje bardzo nieliniowe
+
+### 5.2 Struktura
+
+```python
+# Reprezentacja przez próbki (particles)
+particles = []  # lista (x, wagi)
+
+# Propagacja
+for p in particles:
+    p.x = f(p.x, u) + noise
+
+# Aktualizacja wagi
+for p in particles:
+    p.w *= likelihood(z, p.x)
+
+# Normalizacja
+total_w = sum(p.w for p in particles)
+for p in particles:
+    p.w /= total_w
+```
+
+---
+
+## Czesc VI: Synchronizacja czasu
+
+### 6.1 Problem
+
+Fuzja jest tak dobra, jak dobra jest oś czasu!
+
+```
+IMU: timestamp 1.000000s
+Kamera: timestamp 1.003512s  # opóźnienie!
+
+Jeśli nie uwzględnisz opóźnień → błędna fuzja!
+```
+
+### 6.2 Rozwiazanie
+
+- Stempluj pomiary blisko sprzętu
+- Buforuj stany i update "w przeszłości"
+- Monitoruj statystyki opóźnień
+
+---
+
+## Czesc VII: Outliery i odpornosc
+
+### 7.1 Problem
+
+Wizja generuje outliery!
+
+### 7.2 Rozwiazania
+
+**Gating:**
+```python
+# Odrzucanie pomiarów zbyt daleko od predykcji
+innovation = z - H @ x_pred
+if norm(innovation) > gate_threshold:
+    reject_measurement()
+```
+
+**Funkcje kosztu odporne:**
+- Huber
+- Cauchy
+
+---
+
+## Czesc VIII: Obserwowalnosc i dryf
+
+### 8.1 Problem
+
+Jeśli nie masz pomiarów absolutnych → pewne składowe dryfują!
+
+**Przykład:**
+```
+IMU + enkodery bez wizji:
+- Pozycja bazy → dryfuje w czasie
+- Orientacja → dryfuje wolniej
+```
+
+### 8.2 Rozdzial
+
+- **Szybka estymacja lokalna** (IMU/enkodery) — wysoka częstotliwość
+- **Wolna korekta globalna** (wizja/mapa) — niższa częstotliwość
+
+---
+
+## Czesc IX: Praktyka inzynierska
+
+### 9.1 Checklisty
+
+- [ ] Zdefiniuj stan x: co jest estymowane
+- [ ] Zdefiniuj ramki i transformacje sensorów
+- [ ] Loguj innowację i jej statystyki
+- [ ] Dodaj mechanizm resetu/rekonwergencji
+- [ ] Mierz koszty obliczeń
+
+### 9.2 Co logowac
+
+```python
+# Logi diagnostyczne
+log("innovation", z - H @ x_pred)  # Innowacja
+log("innovation_norm", norm(innovation))  # Norma innowacji
+log("P_diag", np.diag(P))  # Niepewność
+log("timestamp_diff", z.timestamp - current_time)  # Opóźnienie
+```
+
+---
+
+## Czesc X: Pytania do dyskusji
+
 1. Dlaczego timestamping i synchronizacja czasu są krytyczne dla fuzji sensorów?
-2. Kiedy EKF przegrywa z factor graph i odwrotnie (modularność vs koszt online)?
-3. Jak zaprojektujesz gating/outlier rejection, żeby nie „zatruć” estymatora?
-4. Jak rozpoznasz problem obserwowalności (dryf) w danych?
+2. Kiedy EKF przegrywa z factor graph?
+3. Jak zaprojektujesz gating/outlier rejection?
+4. Jak rozpoznasz problem obserwowalności w danych?
 
-## Projekty studenckie
-- EKF dla prostego modelu (IMU + enkodery) z biasem żyroskopu + logowanie innowacji.
-- Factor graph dla kilku poz (pose graph) z odporną funkcją kosztu (Huber) + porównanie z EKF.
-- System synchronizacji: bufor stanów i update „w przeszłości” dla opóźnionych pomiarów (kamera).
+---
 
-## BONUS
-- Najszybciej wykryjesz problemy estymatora po statystykach innowacji: jeśli innowacja rośnie lub ma nielogiczny rozkład, to zwykle problem jest w czasie, kalibracji albo outlierach.
+## Czesc XI: Zadania praktyczne
+
+### Zadanie 1: EKF dla IMU
+
+Zaimplementuj EKF dla:
+- Model: pozycja + prędkość + bias żyroskopu
+- Pomiary: enkodery + IMU
+- Logowanie innowacji
+
+### Zadanie 2: Factor graph
+
+Zaimplementuj factor graph dla pose graph:
+- Kilka pozy
+- Odometria jako czynniki
+- Funkcja kosztu odporna (Huber)
+
+### Zadanie 3: Bufor stanów
+
+Zaimplementuj system buforowania:
+- Bufor stanów
+- Update "w przeszłości" dla opóźnionych pomiarów
+
+---
+
+## BONUS: Innowacja jako metryka
+
+Najszybciej wykryjesz problemy estymatora po statystykach innowacji!
+
+Jeśli innowacja rośnie lub ma nielogiczny rozkład → problem w czasie, kalibracji lub outlierach!
+
+---
+
+*(Koniec wykladu 4)*

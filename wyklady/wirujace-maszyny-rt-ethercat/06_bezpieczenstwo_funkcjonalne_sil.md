@@ -1,100 +1,400 @@
 # Wykład 6: Bezpieczeństwo funkcjonalne (SIL) i reakcje awaryjne
 
-## Cel
-Zaprojektować warstwę bezpieczeństwa, która jest niezależna od „sprytnego” sterowania i działa w najgorszych warunkach.
+## Czesc I: Wstep teoretyczny — czym jest safety
 
-> TL;DR: Safety to osobny kanał decyzyjny. Musi działać, gdy: master się zawiesi, komunikacja padnie, sensor oszaleje, a obiekt ma nadal energię kinetyczną.
+### 1.1 Geneza — dlaczego safety jest osobnym kanałem
 
-## Zasada podstawowa
-Bezpieczeństwo funkcjonalne odpowiada na pytanie:
-„co system zrobi, gdy coś pójdzie źle”.
+Proszę wyobrazić sobie sytuację: wirówka laboratoryjna pracuje 15 000 RPM. Nagle:
 
-Typowe zdarzenia:
-- przegrzanie,
-- przekroczenie prądu,
-- utrata czujnika prędkości,
-- utrata synchronizacji,
-- missed deadline w pętli,
-- błąd komunikacji z napędem.
+- **Master się zawiesza** — co robi napęd?
+- **Komunikacja EtherCAT pada** — co robi system?
+- **Czujnik prędkości pokazuje głupoty** — co robi sterowanie?
+- **Temperatura rośnie do 100°C** — co robi system?
 
-## Co znaczy „SIL” w praktyce (bez wchodzenia w formalizmy)
-Niezależnie od poziomu formalnej certyfikacji, praktycznie interesuje Cię:
-- identyfikacja zagrożeń,
-- funkcje bezpieczeństwa (co ma się zadziać),
-- niezależność kanału bezpieczeństwa od kanału sterowania funkcjonalnego,
-- testowalność (czy umiesz to zweryfikować w runtime i w testach).
+**Kluczowe pytanie:** Czy te reakcje zależą od "normalnego" sterowania?
 
-Najważniejsza zasada architektoniczna:
-- nie możesz zakładać, że moduł sterowania funkcjonalnego jest „żywy” i „racjonalny”, gdy dochodzi do awarii.
+**Odpowiedź brzmi: NIE!**
 
-## Warstwy zabezpieczeń (praktyka)
-- sprzętowe limity prądu/temperatury w napędzie,
-- watchdog w napędzie (brak komunikacji -> safe state),
-- watchdog w kontrolerze (brak pętli -> safe state),
-- logika awaryjna: kontrolowane hamowanie vs odcięcie momentu (zależnie od ryzyka).
+Bezpieczeństwo musi działać **niezależnie** od tego, czy:
+- Master jest żywy
+- Komunikacja działa
+- Dane są sensowne
+- Ktoś patrzy na HMI
 
-## Safe stop: różne strategie i ich ryzyka
-W praktyce spotkasz co najmniej dwa podejścia:
-- odcięcie momentu (szybko, prosto, ale obiekt może „pójść własną drogą”),
-- kontrolowane hamowanie (bezpieczniejsze dla układu, ale wymaga sprawnych napędów i pomiarów).
+### 1.2 Zasada podstawowa
 
-Dlatego safe stop musi być:
-- zdefiniowany dla konkretnych scenariuszy awarii,
-- zaprojektowany jako sekwencja (np. hamowanie -> zatrzymanie -> odcięcie),
-- odporny na brak części sygnałów (degradacja sensoryki).
+Profesor zawsze powtarza: **"Safety to osobny kanał decyzyjny."**
 
-## Co znaczy „safe stop” w praktyce
-To musi być jawnie zdefiniowane dla danej maszyny:
-- „odcięcie” bywa niebezpieczne, jeśli obiekt ma dużą energię kinetyczną,
-- „kontrolowane hamowanie” wymaga sprawnych napędów i sensownych pomiarów.
+**Co to oznacza?**
 
-Wniosek:
-- projektujesz tryb awaryjny tak, by minimalizował ryzyko w typowych awariach.
+```
+Kanał funkcjonalny:    Kanał safety:
+                       
+Regulator PID    →     Watchdog
+     |                    |
+     v                    v
+Sterowanie        →     Limity
+     |                    |
+     v                    v
+Telemetria        →     Safe Stop
+```
 
-## Separacja kanałów: funkcjonalny vs bezpieczeństwa
-To klucz do odporności:
-- kanał funkcjonalny: regulacja, optymalizacja, telemetria,
-- kanał bezpieczeństwa: proste reguły, watchdogi, limity, safe stop.
+**Te dwa kanały muszą być niezależne!**
 
-W praktyce oznacza to:
-- niezależne limity w napędzie (sprzętowo/firmware),
-- watchdogi wielopoziomowe (slave + master),
-- minimalne zależności (safety nie czeka na „ładne dane” z telemetrii).
+### 1.3 Co znaczy "SIL" w praktyce
 
-## Wstrzykiwanie błędów: jak testować safety
-Najbardziej praktyczne testy to testy awaryjne:
-- dropout komunikacji,
-- opóźnienie w pętli (missed deadline),
-- brak czujnika prędkości lub pomiar „zamrożony”,
-- przegrzanie (symulowane),
-- saturacja prądu/momentu (symulowana).
+Bezpieczeństwo funkcjonalne (SIL) odpowiada na pytanie:
+> "Co system zrobi, gdy coś pójdzie źle?"
 
-Klucz: test musi sprawdzać nie tylko, że „zatrzymało”, ale:
-- czy reakcja była w czasie,
-- czy nie było flappingu,
-- czy powrót do normalnej pracy jest kontrolowany (warunki powrotu).
+**Niezależnie od poziomu formalnej certyfikacji, praktycznie:**
 
-## Checklisty
-- Każda klasa awarii ma przypisaną reakcję i warunki powrotu.
-- Watchdogi są wielopoziomowe (napęd + kontroler).
-- Bezpieczeństwo nie zależy od telemetrii i „miękkich” usług.
-- Testujesz awarie przez wstrzykiwanie błędów (dropouty, opóźnienia, brak czujnika).
+1. **Identyfikacja zagrożeń** — co może się zepsuć?
+2. **Funkcje bezpieczeństwa** — co ma się zadziać?
+3. **Niezależność kanału** — safety nie zależy od funkcjonalnego
+4. **Testowalność** — czy umiesz zweryfikować w runtime?
 
-## Zadania (praktyka)
-1. Zdefiniuj 6 klas awarii i dla każdej: detekcja -> reakcja -> warunki powrotu.
-2. Narysuj FSM bezpieczeństwa z co najmniej 5 stanami (NORMAL/WARNING/DEGRADED/SAFE_STOP/RECOVERY).
-3. Ułóż plan testów fault-injection i kryteria „pass/fail” (czas reakcji, brak flappingu, kontrolowany powrót).
+---
 
-## Pytania do studentów
-1. Dlaczego kanał bezpieczeństwa musi działać bez „smart” modułów (telemetria, ML, HMI)?
-2. Kiedy „odcięcie momentu” może być gorsze niż kontrolowane hamowanie i dlaczego nie ma jednej odpowiedzi dla wszystkich maszyn?
-3. Jak zapewnisz, że powrót z SAFE_STOP do NORMAL nie spowoduje flappingu i niebezpiecznych przejść?
-4. Jakie testy fault-injection uznasz za obowiązkowe w każdym wydaniu (release)?
+## Czesc II: Typowe zdarzenia awaryjne
 
-## Projekty studenckie
-- „Safety FSM”: implementacja FSM bezpieczeństwa + logowanie przyczyn przejść + testy scenariuszowe.
-- „Fault injector”: moduł do wstrzykiwania dropoutów, opóźnień, zamrożonych pomiarów i saturacji.
-- „Release gate”: checklista i skrypt, który blokuje release bez przejścia testów awaryjnych.
+### 2.1 Klasy awarii
 
-## BONUS
-- Jeśli nie da się łatwo opisać reakcji na awarię w jednym zdaniu i jednej tabeli, logika safety jest prawdopodobnie zbyt złożona i powinna zostać uproszczona.
+| Awaria | Opis | Potencjalny skutek |
+|--------|------|---------------------|
+| Przegrzanie | Temp. > limit | Pożar, uszkodzenie łożysk |
+| Przekroczenie prądu | Prąd > limit | Uszkodzenie napędu |
+| Utrata sensora | Brak danych z enkodera | Utrata kontroli |
+| Utrata synchronizacji | DC się rozjeżdża | Niespójne dane |
+| Missed deadline | Pętla nie zdążyła | Niestabilność |
+| Błąd komunikacji | EtherCAT timeout | Utrata sterowania |
+
+### 2.2 Reakcje muszą być zdefiniowane
+
+**Dla każdej awarii musisz mieć zdefiniowane:**
+
+1. **Detekcja** — jak wykrywamy?
+2. **Reakcja** — co robimy?
+3. **Warunki powrotu** — kiedy wracamy do normalnej pracy?
+
+---
+
+## Czesc III: Warstwy zabezpieczen
+
+### 3.1 Poziom 1: Sprzętowe limity
+
+```
+Najniższa warstwa — w samym napędzie:
+
+- Bezpiecznik (prąd)
+- Thermal cutoff (temperatura)
+- Hardware watchdog
+```
+
+### 3.2 Poziom 2: Watchdog w napędzie
+
+```c
+// Watchdog w napędzie
+void watchdog_check() {
+    static uint32_t last_heartbeat = 0;
+    uint32_t now = get_tick_ms();
+    
+    // Master wysyła heartbeat co cykl
+    if (now - last_heartbeat > WATCHDOG_TIMEOUT_MS) {
+        // Brak komunikacji → safe state
+        set_pwm(0);           // Wyłącz PWM natychmiast
+        engage_brake();       // Załącz hamulec
+        set_fault(FAULT_WD); // Ustaw flagę błędu
+    }
+}
+```
+
+### 3.3 Poziom 3: Watchdog w kontrolerze
+
+```c
+// Watchdog w master
+void master_watchdog() {
+    // Sprawdź każdego slave
+    for (int i = 0; i < num_slaves; i++) {
+        if (slave[i].timeout_counter > MAX_TIMEOUT) {
+            // Slave nie odpowiada
+            slave[i].state = SLAVE_FAULT;
+            
+            if (critical_slave(i)) {
+                trigger_safe_stop();  // Natychmiast!
+            } else {
+                trigger_degradation(); // Ogranicz osiągi
+            }
+        }
+    }
+}
+```
+
+### 3.4 Poziom 4: Logika awaryjna
+
+```c
+// Logika awaryjna
+void emergency_logic() {
+    if (overtemperature) {
+        // Ogranicz moc, potem stop
+        reduce_power(50);  // Zmniejsz o 50%
+        if (temp > TEMP_CRITICAL) {
+            safe_stop();
+        }
+    }
+    
+    if (overspeed) {
+        // Natychmiastowy stop
+        safe_stop();
+    }
+}
+```
+
+---
+
+## Czesc IV: Safe stop — rozne strategie
+
+### 4.1 Dwie podstawowe strategie
+
+| Strategia | Opis | Zalety | Wady |
+|-----------|------|--------|-------|
+| **Odcięcie momentu** | Natychmiast PWM = 0 | Proste, szybkie | Obiekt "pójdzie własną drogą" |
+| **Kontrolowane hamowanie** | Stop według sekwencji | Bezpieczniejsze | Wymaga sprawnych napędów |
+
+### 4.2 Kiedy ktora strategia
+
+**Odcięcie momentu:**
+- Gdy obiekt ma małą energię kinetyczną
+- Gdy hamowanie może być niebezpieczne (np. ruchomy podzespoł)
+- Gdy potrzebujesz absolutnej pewności
+
+**Kontrolowane hamowanie:**
+- Gdy obiekt ma dużą energię (wirnik 15k RPM!)
+- Gdy nagłe zatrzymanie może uszkodzić mechanikę
+- Gdy masz redundancję pomiarów
+
+### 4.3 Zasada
+
+> "Odcięcie" bywa niebezpieczne, jeśli obiekt ma dużą energię kinetyczną.
+> "Kontrolowane hamowanie" wymaga sprawnych napędów i pomiarów.
+
+**Projektujesz tryb awaryjny tak, by minimalizować ryzyko!**
+
+---
+
+## Czesc V: FSM bezpieczenstwa
+
+### 5.1 Stany
+
+```c
+typedef enum {
+    STATE_NORMAL,      // Normalna praca
+    STATE_WARNING,    // Ostrzeżenie
+    STATE_DEGRADED,   // Ograniczony tryb
+    STATE_SAFE_STOP,  // Bezpieczny stop
+    STATE_FAULT,      // Awaria
+    STATE_RECOVERY    // Powrót do pracy
+} SafetyState;
+```
+
+### 5.2 Przejscia
+
+```
+           +----------+
+           |  NORMAL  |
+           +----------+
+                |
+    (warning) | (degraded)
+                v
+           +-----------+
+           | WARNING   |
+           +-----------+
+                |
+   (powrot) | (degraded)
+                v
+           +----------+   (fault)   +-----------+
+           | DEGRADED | ---------> |   FAULT   |
+           +----------+             +-----------+
+                |                           |
+   (safe stop)| (fault)                    |
+                v                           |
+           +------------+                    |
+           | SAFE_STOP  |                    |
+           +------------+                    |
+                |                           |
+   (recovery) | (reset)                    |
+                v                           |
+           +------------+                   |
+           | RECOVERY   |------------------+
+           +------------+
+                |
+        (powrot do normal)
+                v
+           +----------+
+           |  NORMAL  |
+           +----------+
+```
+
+### 5.3 Zasady przejść
+
+1. **Przejścia do bezpieczniejszych stanów = natychmiastowe**
+2. **Powrót wymaga warunków i histerezy**
+
+```c
+void safety_update() {
+    switch (current_state) {
+        case STATE_NORMAL:
+            if (any_fault()) {
+                transition_to(STATE_SAFE_STOP);  // Natychmiast!
+            } else if (any_warning()) {
+                transition_to(STATE_WARNING);
+            }
+            break;
+            
+        case STATE_WARNING:
+            if (any_fault()) {
+                transition_to(STATE_SAFE_STOP);
+            } else if (!any_warning()) {
+                // Histereza: musi być OK przez 10s
+                if (ok_duration > 10000) {
+                    transition_to(STATE_NORMAL);
+                }
+            }
+            break;
+    }
+}
+```
+
+---
+
+## Czesc VI: Separacja kanalu funkcjonalnego i bezpieczenstwa
+
+### 6.1 Kluczowa zasada
+
+To jest klucz do odporności:
+
+```
+Kanał funkcjonalny:     Kanał bezpieczeństwa:
+                         
+Regulacja      →        Proste reguły
+Optymalizacja  →        Watchdogi
+Telemetria     →        Limity
+                →        Safe Stop
+```
+
+### 6.2 Co to oznacza praktycznie
+
+| Element | Kanał funkcjonalny | Kanał safety |
+|---------|-------------------|--------------|
+| Regulator PID | Tak | Nie |
+| Telemetria | Tak | Nie (nie czekaj na dane) |
+| HMI | Tak | Nie |
+| ML/AI | Tak | Nie |
+| Limity prądu | Niezależnie | Tak |
+| Watchdog | Niezależnie | Tak |
+| Safe stop | Niezależnie | Tak |
+
+### 6.3 Zasady separacji
+
+- **Niezależne limity w napędzie** (sprzętowo/firmware)
+- **Watchdogi wielopoziomowe** (slave + master)
+- **Minimalne zależności** (safety nie czeka na "ładne dane")
+
+---
+
+## Czesc VII: Wstrzykiwanie bledow — jak testowac safety
+
+### 7.1 Dlaczego testujemy awarie
+
+Bo **nie można czekać na awarię w produkcji** żeby sprawdzić, czy system działa!
+
+### 7.2 Typowe testy
+
+| Test | Co symulujesz | Narzędzie |
+|------|---------------|-----------|
+| Dropout komunikacji | Brak odpowiedzi od slave | iptables, tc |
+| Opóźnienie | Opóźnienie komunikacji | tc netem |
+| Missed deadline | Pętla się nie wykonuje | Symulacja w kodzie |
+| Brak sensora | Sensor przestaje działać | Symulacja w kodzie |
+| Zamrożony pomiar | Sensor zwraca stałe wartości | Symulacja w kodzie |
+| Przegrzanie | Temperatura rośnie | Symulacja w kodzie |
+| Saturacja | Prąd/moment = limit | Symulacja w kodzie |
+
+### 7.3 Kryteria testów
+
+Test musi sprawdzać nie tylko, że "zatrzymało":
+
+| Kryterium | Opis |
+|-----------|------|
+| Czas reakcji | Jak szybko system wykrywa awarię? |
+| Stan końcowy | Czy system jest w znanym, bezpiecznym stanie? |
+| Flapping | Czy nie przełącza się ciągle? |
+| Recovery | Czy może wrócić do normalnej pracy? |
+| Logowanie | Czy awaria jest zalogowana? |
+
+---
+
+## Czesc VIII: Checklisty
+
+### Checklisty:
+
+- [ ] Każda klasa awarii ma przypisaną reakcję i warunki powrotu
+- [ ] Watchdogi są wielopoziomowe (napęd + kontroler)
+- [ ] Bezpieczeństwo nie zależy od telemetrii i "miękkich" usług
+- [ ] Testujesz awarie przez wstrzykiwanie błędów
+
+### Zasady:
+
+| Zasada | Wyjaśnienie |
+|--------|-------------|
+| Safety jest niezależny | Działa gdy "główny" system pada |
+| Proste reguły | Złożona logika = błędy |
+| Testuj awarie | Wstrzykiwanie błędów jako standard |
+| Histereza | Unikaj flappingu |
+
+---
+
+## Czesc IX: Pytania do dyskusji
+
+1. Dlaczego kanał bezpieczeństwa musi działać bez "smart" modułów?
+2. Kiedy "odcięcie momentu" może być gorsze niż kontrolowane hamowanie?
+3. Jak zapewnisz, że powrót z SAFE_STOP do NORMAL nie spowoduje flappingu?
+4. Jakie testy fault-injection uznasz za obowiązkowe w każdym wydaniu?
+
+---
+
+## Czesc X: Zadania praktyczne
+
+### Zadanie 1: Klasy awarii
+
+Zdefiniuj 6 klas awarii i dla każdej:
+- Detekcja
+- Reakcja
+- Warunki powrotu
+
+### Zadanie 2: FSM bezpieczeństwa
+
+Narysuj FSM bezpieczeństwa z co najmniej 5 stanami:
+- NORMAL
+- WARNING
+- DEGRADED
+- SAFE_STOP
+- RECOVERY
+
+### Zadanie 3: Plan testów fault-injection
+
+Ułóż plan testów i kryteria "pass/fail":
+- Czas reakcji
+- Brak flappingu
+- Kontrolowany powrót
+
+---
+
+## BONUS: Jesli nie da sie wyjasnic
+
+Jeśli nie da się łatwo opisać reakcji na awarię w jednym zdaniu i jednej tabeli — logika safety jest prawdopodobnie zbyt złożona i powinna zostać uproszczona.
+
+Proste rzeczy są testowalne. Złożone rzeczy — nie.
+
+---
+
+*(Koniec wykladu 6)*
